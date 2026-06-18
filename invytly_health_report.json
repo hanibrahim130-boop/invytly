@@ -1,0 +1,576 @@
+{
+  "summary": {
+    "total_projects": 9,
+    "active_projects": 8,
+    "portfolio_average_score": 70.2625,
+    "portfolio_median_score": 70.65,
+    "projects_needing_attention": 3,
+    "critical_projects": 0
+  },
+  "project_scores": [
+    {
+      "project_id": "INVY-PH0",
+      "project_name": "Phase 0 \u00e2\u20ac\u201d Foundation",
+      "composite_score": 89.4,
+      "adjusted_score": 107.28,
+      "rag_status": "green",
+      "intervention_level": "none",
+      "dimension_scores": {
+        "timeline": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "budget": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "scope": {
+          "score": 100,
+          "weight": 0.2
+        },
+        "quality": {
+          "score": 49,
+          "weight": 0.2
+        },
+        "risk": {
+          "score": 96,
+          "weight": 0.1
+        }
+      },
+      "priority": "high",
+      "status": "completed",
+      "completion_percentage": 1.0
+    },
+    {
+      "project_id": "INVY-PH1",
+      "project_name": "Phase 1 \u00e2\u20ac\u201d Domain & DB (Supabase)",
+      "composite_score": 69.9,
+      "adjusted_score": 104.85000000000001,
+      "rag_status": "amber",
+      "intervention_level": "monitor",
+      "dimension_scores": {
+        "timeline": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "budget": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "scope": {
+          "score": 10,
+          "weight": 0.2
+        },
+        "quality": {
+          "score": 49,
+          "weight": 0.2
+        },
+        "risk": {
+          "score": 81,
+          "weight": 0.1
+        }
+      },
+      "priority": "critical",
+      "status": "in_progress",
+      "completion_percentage": 0.05,
+      "recommended_actions": [
+        "Review scope management and consider feature prioritization or descoping",
+        "Increase testing coverage and implement quality improvement processes"
+      ],
+      "risk_factors": []
+    },
+    {
+      "project_id": "INVY-PH2",
+      "project_name": "Phase 2 \u00e2\u20ac\u201d Public Catalog",
+      "composite_score": 70.9,
+      "adjusted_score": 85.08,
+      "rag_status": "amber",
+      "intervention_level": "none",
+      "dimension_scores": {
+        "timeline": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "budget": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "scope": {
+          "score": 10,
+          "weight": 0.2
+        },
+        "quality": {
+          "score": 49,
+          "weight": 0.2
+        },
+        "risk": {
+          "score": 91,
+          "weight": 0.1
+        }
+      },
+      "priority": "high",
+      "status": "planning",
+      "completion_percentage": 0.0
+    },
+    {
+      "project_id": "INVY-PH3",
+      "project_name": "Phase 3 \u00e2\u20ac\u201d Auth & Order Wizard",
+      "composite_score": 68.7,
+      "adjusted_score": 103.05000000000001,
+      "rag_status": "amber",
+      "intervention_level": "monitor",
+      "dimension_scores": {
+        "timeline": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "budget": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "scope": {
+          "score": 10,
+          "weight": 0.2
+        },
+        "quality": {
+          "score": 49,
+          "weight": 0.2
+        },
+        "risk": {
+          "score": 69,
+          "weight": 0.1
+        }
+      },
+      "priority": "critical",
+      "status": "planning",
+      "completion_percentage": 0.0,
+      "recommended_actions": [
+        "Review scope management and consider feature prioritization or descoping",
+        "Increase testing coverage and implement quality improvement processes"
+      ],
+      "risk_factors": []
+    },
+    {
+      "project_id": "INVY-PH4",
+      "project_name": "Phase 4 \u00e2\u20ac\u201d Payments (Stripe + Manual)",
+      "composite_score": 69.3,
+      "adjusted_score": 103.94999999999999,
+      "rag_status": "amber",
+      "intervention_level": "monitor",
+      "dimension_scores": {
+        "timeline": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "budget": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "scope": {
+          "score": 10,
+          "weight": 0.2
+        },
+        "quality": {
+          "score": 49,
+          "weight": 0.2
+        },
+        "risk": {
+          "score": 75,
+          "weight": 0.1
+        }
+      },
+      "priority": "critical",
+      "status": "planning",
+      "completion_percentage": 0.0,
+      "recommended_actions": [
+        "Review scope management and consider feature prioritization or descoping",
+        "Increase testing coverage and implement quality improvement processes"
+      ],
+      "risk_factors": []
+    },
+    {
+      "project_id": "INVY-PH5",
+      "project_name": "Phase 5 \u00e2\u20ac\u201d Admin Console",
+      "composite_score": 71.1,
+      "adjusted_score": 71.1,
+      "rag_status": "amber",
+      "intervention_level": "none",
+      "dimension_scores": {
+        "timeline": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "budget": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "scope": {
+          "score": 10,
+          "weight": 0.2
+        },
+        "quality": {
+          "score": 49,
+          "weight": 0.2
+        },
+        "risk": {
+          "score": 93,
+          "weight": 0.1
+        }
+      },
+      "priority": "medium",
+      "status": "planning",
+      "completion_percentage": 0.0
+    },
+    {
+      "project_id": "INVY-PH6",
+      "project_name": "Phase 6 \u00e2\u20ac\u201d Hosted Invitation + RSVP",
+      "composite_score": 70.8,
+      "adjusted_score": 84.96,
+      "rag_status": "amber",
+      "intervention_level": "none",
+      "dimension_scores": {
+        "timeline": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "budget": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "scope": {
+          "score": 10,
+          "weight": 0.2
+        },
+        "quality": {
+          "score": 49,
+          "weight": 0.2
+        },
+        "risk": {
+          "score": 90,
+          "weight": 0.1
+        }
+      },
+      "priority": "high",
+      "status": "planning",
+      "completion_percentage": 0.0
+    },
+    {
+      "project_id": "INVY-PH7",
+      "project_name": "Phase 7 \u00e2\u20ac\u201d Custom Design Requests",
+      "composite_score": 70.9,
+      "adjusted_score": 70.9,
+      "rag_status": "amber",
+      "intervention_level": "none",
+      "dimension_scores": {
+        "timeline": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "budget": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "scope": {
+          "score": 10,
+          "weight": 0.2
+        },
+        "quality": {
+          "score": 49,
+          "weight": 0.2
+        },
+        "risk": {
+          "score": 91,
+          "weight": 0.1
+        }
+      },
+      "priority": "medium",
+      "status": "planning",
+      "completion_percentage": 0.0
+    },
+    {
+      "project_id": "INVY-PH8",
+      "project_name": "Phase 8 \u00e2\u20ac\u201d Hardening, Emails, Analytics, Deploy",
+      "composite_score": 70.5,
+      "adjusted_score": 84.6,
+      "rag_status": "amber",
+      "intervention_level": "none",
+      "dimension_scores": {
+        "timeline": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "budget": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "scope": {
+          "score": 10,
+          "weight": 0.2
+        },
+        "quality": {
+          "score": 49,
+          "weight": 0.2
+        },
+        "risk": {
+          "score": 87,
+          "weight": 0.1
+        }
+      },
+      "priority": "high",
+      "status": "planning",
+      "completion_percentage": 0.0
+    }
+  ],
+  "dimension_analysis": {
+    "dimension_statistics": {
+      "timeline": {
+        "average_score": 100,
+        "median_score": 100.0,
+        "min_score": 100,
+        "max_score": 100,
+        "std_deviation": 0.0,
+        "projects_below_60": 0,
+        "projects_above_80": 8
+      },
+      "budget": {
+        "average_score": 100,
+        "median_score": 100.0,
+        "min_score": 100,
+        "max_score": 100,
+        "std_deviation": 0.0,
+        "projects_below_60": 0,
+        "projects_above_80": 8
+      },
+      "scope": {
+        "average_score": 10,
+        "median_score": 10.0,
+        "min_score": 10,
+        "max_score": 10,
+        "std_deviation": 0.0,
+        "projects_below_60": 8,
+        "projects_above_80": 0
+      },
+      "quality": {
+        "average_score": 49,
+        "median_score": 49.0,
+        "min_score": 49,
+        "max_score": 49,
+        "std_deviation": 0.0,
+        "projects_below_60": 8,
+        "projects_above_80": 0
+      },
+      "risk": {
+        "average_score": 84.625,
+        "median_score": 88.5,
+        "min_score": 69,
+        "max_score": 93,
+        "std_deviation": 8.749489781042746,
+        "projects_below_60": 0,
+        "projects_above_80": 6
+      }
+    },
+    "weakest_dimension": "scope",
+    "strongest_dimension": "timeline",
+    "dimension_rankings": [
+      [
+        "timeline",
+        100
+      ],
+      [
+        "budget",
+        100
+      ],
+      [
+        "risk",
+        84.625
+      ],
+      [
+        "quality",
+        49
+      ],
+      [
+        "scope",
+        10
+      ]
+    ]
+  },
+  "rag_status": {
+    "rag_counts": {
+      "green": 0,
+      "amber": 8,
+      "red": 0
+    },
+    "rag_percentages": {
+      "green": 0.0,
+      "amber": 100.0,
+      "red": 0.0
+    },
+    "portfolio_grade": "concerning",
+    "green_projects": [],
+    "amber_projects": [
+      {
+        "id": "INVY-PH1",
+        "name": "Phase 1 \u00e2\u20ac\u201d Domain & DB (Supabase)",
+        "score": 69.9
+      },
+      {
+        "id": "INVY-PH2",
+        "name": "Phase 2 \u00e2\u20ac\u201d Public Catalog",
+        "score": 70.9
+      },
+      {
+        "id": "INVY-PH3",
+        "name": "Phase 3 \u00e2\u20ac\u201d Auth & Order Wizard",
+        "score": 68.7
+      },
+      {
+        "id": "INVY-PH4",
+        "name": "Phase 4 \u00e2\u20ac\u201d Payments (Stripe + Manual)",
+        "score": 69.3
+      },
+      {
+        "id": "INVY-PH5",
+        "name": "Phase 5 \u00e2\u20ac\u201d Admin Console",
+        "score": 71.1
+      },
+      {
+        "id": "INVY-PH6",
+        "name": "Phase 6 \u00e2\u20ac\u201d Hosted Invitation + RSVP",
+        "score": 70.8
+      },
+      {
+        "id": "INVY-PH7",
+        "name": "Phase 7 \u00e2\u20ac\u201d Custom Design Requests",
+        "score": 70.9
+      },
+      {
+        "id": "INVY-PH8",
+        "name": "Phase 8 \u00e2\u20ac\u201d Hardening, Emails, Analytics, Deploy",
+        "score": 70.5
+      }
+    ],
+    "red_projects": []
+  },
+  "intervention_list": [
+    {
+      "project_id": "INVY-PH3",
+      "project_name": "Phase 3 \u00e2\u20ac\u201d Auth & Order Wizard",
+      "composite_score": 68.7,
+      "adjusted_score": 103.05000000000001,
+      "rag_status": "amber",
+      "intervention_level": "monitor",
+      "dimension_scores": {
+        "timeline": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "budget": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "scope": {
+          "score": 10,
+          "weight": 0.2
+        },
+        "quality": {
+          "score": 49,
+          "weight": 0.2
+        },
+        "risk": {
+          "score": 69,
+          "weight": 0.1
+        }
+      },
+      "priority": "critical",
+      "status": "planning",
+      "completion_percentage": 0.0,
+      "recommended_actions": [
+        "Review scope management and consider feature prioritization or descoping",
+        "Increase testing coverage and implement quality improvement processes"
+      ],
+      "risk_factors": []
+    },
+    {
+      "project_id": "INVY-PH4",
+      "project_name": "Phase 4 \u00e2\u20ac\u201d Payments (Stripe + Manual)",
+      "composite_score": 69.3,
+      "adjusted_score": 103.94999999999999,
+      "rag_status": "amber",
+      "intervention_level": "monitor",
+      "dimension_scores": {
+        "timeline": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "budget": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "scope": {
+          "score": 10,
+          "weight": 0.2
+        },
+        "quality": {
+          "score": 49,
+          "weight": 0.2
+        },
+        "risk": {
+          "score": 75,
+          "weight": 0.1
+        }
+      },
+      "priority": "critical",
+      "status": "planning",
+      "completion_percentage": 0.0,
+      "recommended_actions": [
+        "Review scope management and consider feature prioritization or descoping",
+        "Increase testing coverage and implement quality improvement processes"
+      ],
+      "risk_factors": []
+    },
+    {
+      "project_id": "INVY-PH1",
+      "project_name": "Phase 1 \u00e2\u20ac\u201d Domain & DB (Supabase)",
+      "composite_score": 69.9,
+      "adjusted_score": 104.85000000000001,
+      "rag_status": "amber",
+      "intervention_level": "monitor",
+      "dimension_scores": {
+        "timeline": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "budget": {
+          "score": 100,
+          "weight": 0.25
+        },
+        "scope": {
+          "score": 10,
+          "weight": 0.2
+        },
+        "quality": {
+          "score": 49,
+          "weight": 0.2
+        },
+        "risk": {
+          "score": 81,
+          "weight": 0.1
+        }
+      },
+      "priority": "critical",
+      "status": "in_progress",
+      "completion_percentage": 0.05,
+      "recommended_actions": [
+        "Review scope management and consider feature prioritization or descoping",
+        "Increase testing coverage and implement quality improvement processes"
+      ],
+      "risk_factors": []
+    }
+  ],
+  "portfolio_trends": {},
+  "recommendations": [
+    "MEDIUM: Over half of portfolio projects need monitoring and support.",
+    "Focus improvement efforts on scope - weakest portfolio dimension.",
+    "Portfolio health needs improvement. Implement enhanced monitoring and support."
+  ]
+}
