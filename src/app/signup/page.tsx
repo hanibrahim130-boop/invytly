@@ -59,7 +59,10 @@ export default function SignupPage() {
       const code = (err as { code?: string }).code ?? "";
       if (code === "auth/popup-closed-by-user") setError("Sign-in popup was closed");
       else if (code === "auth/popup-blocked") setError("Popup blocked. Allow popups for this site.");
-      else setError("Google sign-in failed. Please try again.");
+      else if (code === "auth/unauthorized-domain") setError("Domain not authorized. Add this domain in Firebase Console → Authentication → Settings → Authorized domains.");
+      else if (code === "auth/operation-not-allowed") setError("Google sign-in not enabled in Firebase Console.");
+      else if (code === "auth/cancelled-popup-request") setError("Sign-in cancelled");
+      else setError(`Google sign-in failed (${code}). Please try again.`);
     } finally {
       setGoogleLoading(false);
     }
