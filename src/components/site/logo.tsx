@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { SITE_CONFIG } from "@/lib/config";
 
 /**
- * Invytly mark — an invitation envelope monogram.
+ * Invyty mark — an invitation envelope monogram.
  * Sharp ink card with a terracotta flap that lifts on hover.
  * Single self-contained SVG; scales crisply at any size.
  */

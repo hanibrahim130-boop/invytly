@@ -12,7 +12,7 @@ const firebaseConfig = {
   measurementId: "G-VKWVBZCQGY",
 };
 
-const ADMIN_EMAIL = "admin@invytly.com";
+const ADMIN_EMAIL = "admin@invyty.com";
 
 let app: FirebaseApp;
 let auth: Auth;

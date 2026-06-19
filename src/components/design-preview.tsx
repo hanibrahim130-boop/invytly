@@ -264,7 +264,7 @@ export function DesignPreview({
               fontWeight: 600,
             }}
           >
-            INVYTLY
+            INVYTY
           </span>
           <span style={{ width: "1.4cqi", height: "1.4cqi", background: p.accent, borderRadius: "9999px" }} />
         </div>

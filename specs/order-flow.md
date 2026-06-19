@@ -11,7 +11,7 @@
 
 ## 1. Context
 
-The Invytly website currently has design browsing, a detail page with an "Order this design" CTA that links to `/order?design={id}`, and a pricing page with three tiers. However, the `/order` route does not exist — users hit a 404. We need a complete multi-phase ordering flow that takes a user from design selection through event details, tier selection, review, and confirmation.
+The Invyty website currently has design browsing, a detail page with an "Order this design" CTA that links to `/order?design={id}`, and a pricing page with three tiers. However, the `/order` route does not exist — users hit a 404. We need a complete multi-phase ordering flow that takes a user from design selection through event details, tier selection, review, and confirmation.
 
 This is a client-side-only flow (no backend). State is managed via React context + localStorage. Payment is mocked (no real Stripe integration). The goal is a production-quality UX that can later be wired to a real backend.
 

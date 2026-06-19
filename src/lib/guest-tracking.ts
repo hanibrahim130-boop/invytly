@@ -37,7 +37,7 @@ interface GuestStore {
   guests: Guest[];
 }
 
-const STORAGE_KEY = "invytly-guests";
+const STORAGE_KEY = "invyty-guests";
 
 function loadStore(): GuestStore {
   if (typeof window === "undefined") return { event: null, guests: [] };

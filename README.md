@@ -1,4 +1,4 @@
-# Invytly — Digital Invitations Platform
+# Invyty — Digital Invitations Platform
 
 Production-ready digital invitation platform. Customers browse invitation designs, submit event details, pay, and receive a hosted invitation link plus an image/PDF download. Guests open the link, view event details, and RSVP.
 

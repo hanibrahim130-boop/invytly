@@ -33,7 +33,7 @@ export default function AboutPage() {
       {/* Hero */}
       <Container className="pt-32 pb-16">
         <Reveal>
-          <p className="label-mono text-[color:var(--primary)]">About Invytly</p>
+          <p className="label-mono text-[color:var(--primary)]">About Invyty</p>
         </Reveal>
         <Reveal delay={0.1}>
           <h1 className="mt-6 max-w-4xl font-[family-name:var(--font-display)] text-5xl leading-[1.02] tracking-tight sm:text-6xl md:text-7xl">
@@ -42,7 +42,7 @@ export default function AboutPage() {
         </Reveal>
         <Reveal delay={0.2}>
           <p className="mt-8 max-w-2xl text-lg leading-relaxed text-[color:var(--muted-foreground)]">
-            Invytly was born from a simple frustration: digital invitations had become
+            Invyty was born from a simple frustration: digital invitations had become
             generic, forgettable, and impersonal. We set out to bring the craft of
             editorial design to the way people celebrate life&apos;s milestones.
           </p>
@@ -104,7 +104,7 @@ export default function AboutPage() {
           <div className="lg:col-span-8">
             <Reveal delay={0.1}>
               <p className="font-[family-name:var(--font-display)] text-2xl leading-relaxed">
-                Invytly started in 2023 with a single wedding invitation — a custom
+                Invyty started in 2023 with a single wedding invitation — a custom
                 piece that took three weeks and cost a fortune. We knew there had to be
                 a better way.
               </p>

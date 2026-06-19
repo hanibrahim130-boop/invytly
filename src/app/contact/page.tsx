@@ -13,8 +13,8 @@ const CHANNELS = [
   {
     icon: Mail,
     label: "Email",
-    value: "hello@invytly.app",
-    href: "mailto:hello@invytly.app",
+    value: "hello@invyty.bundlyplus.com",
+    href: "mailto:hello@invyty.bundlyplus.com",
   },
   {
     icon: MessageCircle,

@@ -104,7 +104,7 @@ const INITIAL_STATE: OrderState = {
   guests: [],
 };
 
-const STORAGE_KEY = "invytly-order";
+const STORAGE_KEY = "invyty-order";
 
 interface OrderContextValue {
   state: OrderState;
