@@ -16,7 +16,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-export type RSVPStatus = "attending" | "declined" | "pending";
+export type RSVPStatus = "not_opened" | "opened" | "attending" | "declined";
 
 export interface FirestoreEvent {
   orderId: string;
@@ -47,6 +47,7 @@ export interface FirestoreGuest {
   status: RSVPStatus;
   dietaryNotes?: string;
   message?: string;
+  openedAt: string | null;
   respondedAt: string | null;
 }
 
@@ -54,7 +55,9 @@ export interface RSVPStats {
   total: number;
   attending: number;
   declined: number;
-  pending: number;
+  opened: number;
+  notOpened: number;
+  openRate: number;
   totalPlusOnes: number;
   totalHeadcount: number;
 }
@@ -110,9 +113,24 @@ export async function addGuestToFirestore(
 export async function updateGuestRSVPInFirestore(
   orderId: string,
   guestId: string,
-  patch: Partial<Pick<FirestoreGuest, "status" | "plusOnes" | "dietaryNotes" | "message" | "respondedAt" | "email" | "phone">>
+  patch: Partial<Pick<FirestoreGuest, "status" | "plusOnes" | "dietaryNotes" | "message" | "respondedAt" | "email" | "phone" | "openedAt">>
 ): Promise<void> {
   await updateDoc(doc(db, "events", orderId, "guests", guestId), patch);
+}
+
+export async function markGuestOpened(orderId: string, guestId: string): Promise<void> {
+  const ref = doc(db, "events", orderId, "guests", guestId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+  const data = snap.data() as FirestoreGuest;
+  if (data.status === "not_opened") {
+    await updateDoc(ref, { status: "opened", openedAt: new Date().toISOString() });
+  }
+}
+
+export async function getGuestFromFirestore(orderId: string, guestId: string): Promise<FirestoreGuest | null> {
+  const snap = await getDoc(doc(db, "events", orderId, "guests", guestId));
+  return snap.exists() ? (snap.data() as FirestoreGuest) : null;
 }
 
 export async function findGuestByNameInFirestore(
@@ -151,7 +169,8 @@ export function computeStats(guests: FirestoreGuest[]): RSVPStats {
   const total = guests.length;
   const attending = guests.filter((g) => g.status === "attending").length;
   const declined = guests.filter((g) => g.status === "declined").length;
-  const pending = guests.filter((g) => g.status === "pending").length;
+  const opened = guests.filter((g) => g.status === "opened" || g.status === "attending" || g.status === "declined").length;
+  const notOpened = guests.filter((g) => g.status === "not_opened").length;
   const totalPlusOnes = guests
     .filter((g) => g.status === "attending")
     .reduce((sum, g) => sum + (g.plusOnes ?? 0), 0);
@@ -159,18 +178,20 @@ export function computeStats(guests: FirestoreGuest[]): RSVPStats {
     total,
     attending,
     declined,
-    pending,
+    opened,
+    notOpened,
+    openRate: total > 0 ? Math.round((opened / total) * 100) : 0,
     totalPlusOnes,
     totalHeadcount: attending + totalPlusOnes,
   };
 }
 
 export function emptyStats(): RSVPStats {
-  return { total: 0, attending: 0, declined: 0, pending: 0, totalPlusOnes: 0, totalHeadcount: 0 };
+  return { total: 0, attending: 0, declined: 0, opened: 0, notOpened: 0, openRate: 0, totalPlusOnes: 0, totalHeadcount: 0 };
 }
 
 export function exportGuestsCSV(guests: FirestoreGuest[]): string {
-  const headers = ["Name", "Email", "Phone", "Status", "Plus Ones", "Dietary Notes", "Message", "Responded At"];
+  const headers = ["Name", "Email", "Phone", "Status", "Plus Ones", "Dietary Notes", "Message", "Opened At", "Responded At"];
   const rows = guests.map((g) => [
     g.name,
     g.email ?? "",
@@ -179,6 +200,7 @@ export function exportGuestsCSV(guests: FirestoreGuest[]): string {
     String(g.plusOnes ?? 0),
     g.dietaryNotes ?? "",
     g.message ?? "",
+    g.openedAt ?? "",
     g.respondedAt ?? "",
   ]);
   return [headers, ...rows]

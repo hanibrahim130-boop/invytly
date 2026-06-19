@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Check, X, Clock, Users, Download, Copy, CheckCheck, Calendar, MapPin, Plus } from "lucide-react";
+import { Check, X, Clock, Users, Download, Copy, CheckCheck, Calendar, MapPin, Plus, Eye, Mail } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,7 @@ import {
 } from "@/lib/firestore";
 import { cn } from "@/lib/utils";
 
-type Filter = "all" | "attending" | "declined" | "pending";
+type Filter = "all" | "attending" | "declined" | "opened" | "not_opened";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -92,7 +92,8 @@ export default function DashboardPage() {
       orderId: event.orderId,
       name: newGuestName.trim(),
       plusOnes: 0,
-      status: "pending",
+      status: "not_opened",
+      openedAt: null,
       respondedAt: null,
     });
     setNewGuestName("");
@@ -135,9 +136,10 @@ export default function DashboardPage() {
 
   const FILTERS: { id: Filter; label: string; count: number }[] = [
     { id: "all", label: "All", count: stats.total },
+    { id: "not_opened", label: "Not opened", count: stats.notOpened },
+    { id: "opened", label: "Opened", count: stats.opened - stats.attending - stats.declined },
     { id: "attending", label: "Attending", count: stats.attending },
     { id: "declined", label: "Declined", count: stats.declined },
-    { id: "pending", label: "Pending", count: stats.pending },
   ];
 
   return (
@@ -231,9 +233,10 @@ export default function DashboardPage() {
 
       {/* Stats */}
       <Container className="py-10">
-        <div className="grid grid-cols-2 gap-px bg-[color:var(--border)] md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-px bg-[color:var(--border)] md:grid-cols-5">
           {[
             { label: "Total invited", value: stats.total, icon: Users },
+            { label: "Opened", value: stats.opened, icon: Eye },
             { label: "Attending", value: stats.attending, icon: Check },
             { label: "Declined", value: stats.declined, icon: X },
             { label: "Headcount", value: stats.totalHeadcount, icon: Users },
@@ -248,6 +251,24 @@ export default function DashboardPage() {
               </p>
             </div>
           ))}
+        </div>
+      </Container>
+
+      {/* Open rate banner */}
+      <Container className="py-6">
+        <div className="flex items-center justify-between border border-[color:var(--border)] px-6 py-4">
+          <div className="flex items-center gap-3">
+            <Eye className="h-5 w-5 text-[color:var(--primary)]" />
+            <div>
+              <p className="label-mono text-[color:var(--muted-foreground)]">Open rate</p>
+              <p className="font-[family-name:var(--font-display)] text-2xl tracking-tight">
+                {stats.openRate}%
+              </p>
+            </div>
+          </div>
+          <p className="text-sm text-[color:var(--muted-foreground)]">
+            {stats.opened} of {stats.total} guests opened their invitation
+          </p>
         </div>
       </Container>
 
@@ -335,6 +356,7 @@ export default function DashboardPage() {
                   <th className="hidden p-4 text-left label-mono md:table-cell">Dietary</th>
                   <th className="hidden p-4 text-left label-mono lg:table-cell">Message</th>
                   <th className="hidden p-4 text-left label-mono lg:table-cell">Responded</th>
+                  <th className="hidden p-4 text-left label-mono xl:table-cell">Link</th>
                 </tr>
               </thead>
               <tbody>
@@ -361,6 +383,17 @@ export default function DashboardPage() {
                         ? new Date(g.respondedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })
                         : "—"}
                     </td>
+                    <td className="hidden p-4 xl:table-cell">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${origin}/rsvp/${event?.orderId}/${g.id}`);
+                        }}
+                        className="text-[color:var(--muted-foreground)] transition-colors hover:text-[color:var(--primary)]"
+                        aria-label="Copy guest link"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -376,9 +409,10 @@ function StatusBadge({ status }: { status: RSVPStatus }) {
   const config = {
     attending: { icon: Check, label: "Attending", className: "border-[color:var(--primary)] text-[color:var(--primary)]" },
     declined: { icon: X, label: "Declined", className: "border-[color:var(--foreground)] text-[color:var(--foreground)]" },
-    pending: { icon: Clock, label: "Pending", className: "border-[color:var(--border)] text-[color:var(--muted-foreground)]" },
+    opened: { icon: Eye, label: "Opened", className: "border-[color:var(--foreground)] text-[color:var(--muted-foreground)]" },
+    not_opened: { icon: Mail, label: "Not opened", className: "border-[color:var(--border)] text-[color:var(--muted-foreground)]" },
   };
-  const c = config[status];
+  const c = config[status] ?? config.not_opened;
   return (
     <span className={cn("inline-flex items-center gap-1.5 border px-2.5 py-1 text-xs font-medium", c.className)}>
       <c.icon className="h-3 w-3" />

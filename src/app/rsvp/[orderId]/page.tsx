@@ -28,7 +28,7 @@ export default function RSVPPage() {
   const [loaded, setLoaded] = React.useState(false);
   const [submitted, setSubmitted] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
-  const [status, setStatus] = React.useState<RSVPStatus>("pending");
+  const [status, setStatus] = React.useState<RSVPStatus>("not_opened");
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [phone, setPhone] = React.useState("");
@@ -70,7 +70,7 @@ export default function RSVPPage() {
     e.preventDefault();
     const errs: Record<string, string> = {};
     if (!name.trim()) errs.name = "Your name is required";
-    if (status === "pending") errs.status = "Please select Attending or Declined";
+    if (status !== "attending" && status !== "declined") errs.status = "Please select Attending or Declined";
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
@@ -100,6 +100,7 @@ export default function RSVPPage() {
           status,
           dietaryNotes: status === "attending" ? dietaryNotes : undefined,
           message: message || undefined,
+          openedAt: new Date().toISOString(),
           respondedAt: now,
         });
       }

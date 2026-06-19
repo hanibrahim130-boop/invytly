@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-export type RSVPStatus = "attending" | "declined" | "pending";
+export type RSVPStatus = "not_opened" | "opened" | "attending" | "declined";
 
 export interface Guest {
   id: string;
@@ -13,6 +13,7 @@ export interface Guest {
   status: RSVPStatus;
   dietaryNotes?: string;
   message?: string;
+  openedAt: string | null;
   respondedAt: string | null;
 }
 
@@ -86,6 +87,18 @@ export function findGuestById(guestId: string): Guest | null {
   return store.guests.find((g) => g.id === guestId) ?? null;
 }
 
+export function markGuestOpened(guestId: string): Guest | null {
+  const store = loadStore();
+  const guest = store.guests.find((g) => g.id === guestId);
+  if (!guest) return null;
+  if (guest.status === "not_opened") {
+    guest.status = "opened";
+    guest.openedAt = new Date().toISOString();
+    saveStore(store);
+  }
+  return guest;
+}
+
 export function updateGuestRSVP(
   guestId: string,
   patch: Partial<Pick<Guest, "status" | "plusOnes" | "dietaryNotes" | "message" | "respondedAt">>
@@ -113,16 +126,17 @@ export function getRSVPStats() {
   const total = guests.length;
   const attending = guests.filter((g) => g.status === "attending").length;
   const declined = guests.filter((g) => g.status === "declined").length;
-  const pending = guests.filter((g) => g.status === "pending").length;
+  const opened = guests.filter((g) => g.status === "opened" || g.status === "attending" || g.status === "declined").length;
+  const notOpened = guests.filter((g) => g.status === "not_opened").length;
   const totalPlusOnes = guests
     .filter((g) => g.status === "attending")
     .reduce((sum, g) => sum + g.plusOnes, 0);
-  return { total, attending, declined, pending, totalPlusOnes, totalHeadcount: attending + totalPlusOnes };
+  return { total, attending, declined, opened, notOpened, openRate: total > 0 ? Math.round((opened / total) * 100) : 0, totalPlusOnes, totalHeadcount: attending + totalPlusOnes };
 }
 
 export function exportGuestsCSV(): string {
   const guests = getAllGuests();
-  const headers = ["Name", "Email", "Phone", "Status", "Plus Ones", "Dietary Notes", "Message", "Responded At"];
+  const headers = ["Name", "Email", "Phone", "Status", "Plus Ones", "Dietary Notes", "Message", "Opened At", "Responded At"];
   const rows = guests.map((g) => [
     g.name,
     g.email ?? "",
@@ -131,6 +145,7 @@ export function exportGuestsCSV(): string {
     String(g.plusOnes),
     g.dietaryNotes ?? "",
     g.message ?? "",
+    g.openedAt ?? "",
     g.respondedAt ?? "",
   ]);
   return [headers, ...rows]

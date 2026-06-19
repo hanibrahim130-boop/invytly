@@ -1,69 +1,129 @@
 "use client";
 
 import * as React from "react";
-import { Check, Copy, CheckCheck, Users, ExternalLink, Share2, Sparkles } from "lucide-react";
+import { Check, Copy, CheckCheck, Users, ExternalLink, Share2, Sparkles, Link2 } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { OrderStepper } from "@/components/order/order-stepper";
-import { useOrder, TIERS } from "@/lib/order-context";
+import { useOrder, TIERS, type GuestEntry } from "@/lib/order-context";
 import { getDesignById } from "@/lib/mock-data";
-import { saveEventToFirestore } from "@/lib/firestore";
+import { saveEventToFirestore, addGuestToFirestore } from "@/lib/firestore";
 import { useAuth } from "@/lib/auth-context";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
+
+interface PublishedGuest extends GuestEntry {
+  firestoreId: string;
+}
 
 export function OrderPhase6Links() {
   const { state, reset } = useOrder();
   const { user } = useAuth();
   const [published, setPublished] = React.useState(false);
-  const [copied, setCopied] = React.useState(false);
+  const [publishing, setPublishing] = React.useState(false);
+  const [publishedGuests, setPublishedGuests] = React.useState<PublishedGuest[]>([]);
+  const [copiedId, setCopiedId] = React.useState<string | null>(null);
+  const [copiedAll, setCopiedAll] = React.useState(false);
 
   const design = state.designId ? getDesignById(state.designId) : null;
   const tier = TIERS.find((t) => t.id === state.tier);
-
-  // Persist event to Firestore on mount (order flow is auth-gated, so user exists)
-  React.useEffect(() => {
-    if (published || !state.orderNumber || !design || !user) return;
-
-    saveEventToFirestore({
-      orderId: state.orderNumber,
-      designId: state.designId!,
-      designName: design.name,
-      eventType: state.eventType,
-      names: state.names,
-      eventDate: state.eventDate,
-      eventTime: state.eventTime,
-      venue: state.venue,
-      message: state.message,
-      contactName: state.contactName,
-      contactEmail: state.contactEmail ?? "",
-      tier: state.tier ?? "",
-      price: tier?.price ?? 0,
-      status: "active",
-      createdAt: new Date().toISOString(),
-      clientId: user.uid,
-    }).catch((err) => {
-      console.error("Failed to save event to Firestore:", err);
-    });
-
-    setPublished(true);
-  }, [published, state.orderNumber, design, user, state.designId, state.eventType, state.names, state.eventDate, state.eventTime, state.venue, state.message, state.contactName, state.contactEmail, state.tier, tier]);
-
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const rsvpLink = state.orderNumber ? `${origin}/rsvp/${state.orderNumber}` : "";
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(rsvpLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  React.useEffect(() => {
+    if (published || publishing || !state.orderNumber || !design || !user) return;
+
+    const orderId = state.orderNumber;
+    setPublishing(true);
+
+    (async () => {
+      try {
+        await saveEventToFirestore({
+          orderId: orderId,
+          designId: state.designId!,
+          designName: design.name,
+          eventType: state.eventType,
+          names: state.names,
+          eventDate: state.eventDate,
+          eventTime: state.eventTime,
+          venue: state.venue,
+          message: state.message,
+          contactName: state.contactName,
+          contactEmail: state.contactEmail ?? "",
+          tier: state.tier ?? "",
+          price: tier?.price ?? 0,
+          status: "active",
+          createdAt: new Date().toISOString(),
+          clientId: user.uid,
+        });
+
+        const saved: PublishedGuest[] = [];
+        for (const g of state.guests) {
+          const created = await addGuestToFirestore({
+            orderId: orderId,
+            name: g.name,
+            phone: g.phone || undefined,
+            plusOnes: 0,
+            status: "not_opened",
+            openedAt: null,
+            respondedAt: null,
+          });
+          saved.push({ ...g, firestoreId: created.id });
+        }
+        setPublishedGuests(saved);
+        setPublished(true);
+      } catch (err) {
+        console.error("Failed to publish event/guests:", err);
+      } finally {
+        setPublishing(false);
+      }
+    })();
+  }, [published, publishing, state.orderNumber, design, user, state.designId, state.eventType, state.names, state.eventDate, state.eventTime, state.venue, state.message, state.contactName, state.contactEmail, state.tier, tier, state.guests]);
+
+  const guestLink = (g: PublishedGuest) =>
+    `${origin}/rsvp/${state.orderNumber}/${g.firestoreId}`;
+
+  const handleCopyGuest = (g: PublishedGuest) => {
+    navigator.clipboard.writeText(guestLink(g));
+    setCopiedId(g.id);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleWhatsAppShare = () => {
-    const text = `You're invited to ${state.names}'s ${state.eventType}! View your invitation and RSVP here: ${rsvpLink}`;
-    const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    window.open(waUrl, "_blank");
+  const handleWhatsAppGuest = (g: PublishedGuest) => {
+    const text = `Hi ${g.name}, you're invited to ${state.names}'s ${state.eventType}! View your invitation and RSVP here: ${guestLink(g)}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  };
+
+  const handleCopyAllLinks = () => {
+    const text = publishedGuests
+      .map((g) => `${g.name}: ${guestLink(g)}`)
+      .join("\n");
+    navigator.clipboard.writeText(text);
+    setCopiedAll(true);
+    setTimeout(() => setCopiedAll(false), 2000);
   };
 
   if (!design) return null;
+
+  if (publishing) {
+    return (
+      <>
+        <Container className="pt-28 pb-6">
+          <OrderStepper />
+        </Container>
+        <Container className="py-20 text-center">
+          <div className="mx-auto grid h-14 w-14 place-items-center border border-[color:var(--foreground)]">
+            <Sparkles className="h-6 w-6 animate-pulse text-[color:var(--primary)]" />
+          </div>
+          <p className="label-mono mt-6 text-[color:var(--primary)]">Publishing</p>
+          <h1 className="mt-4 font-[family-name:var(--font-display)] text-3xl tracking-tight">
+            Generating your guest links…
+          </h1>
+          <p className="mt-4 text-sm text-[color:var(--muted-foreground)]">
+            Creating unique tracked links for {state.guests.length} {state.guests.length === 1 ? "guest" : "guests"}.
+          </p>
+        </Container>
+      </>
+    );
+  }
 
   return (
     <>
@@ -72,7 +132,7 @@ export function OrderPhase6Links() {
       </Container>
 
       <Container className="py-10">
-        <div className="mx-auto max-w-2xl">
+        <div className="mx-auto max-w-3xl">
           {/* Success header */}
           <div className="text-center">
             <div className="mx-auto grid h-16 w-16 place-items-center bg-[color:var(--foreground)] text-[color:var(--background)]">
@@ -83,7 +143,7 @@ export function OrderPhase6Links() {
               Your invitation is ready.
             </h1>
             <p className="mt-4 text-[color:var(--muted-foreground)]">
-              Share the link with your guests on WhatsApp. Track who accepts and who declines from your dashboard.
+              Share each guest&apos;s unique link via WhatsApp. Track opens, accepts, and declines from your dashboard.
             </p>
           </div>
 
@@ -97,27 +157,57 @@ export function OrderPhase6Links() {
             <span className="label-mono text-[color:var(--primary)]">{formatCurrency(tier?.price ?? 0)}</span>
           </div>
 
-          {/* Single RSVP link */}
+          {/* Per-guest links */}
           <div className="mt-10 border border-[color:var(--foreground)] p-6">
-            <p className="label-mono text-[color:var(--primary)]">Your invitation link</p>
-            <p className="mt-3 text-sm text-[color:var(--muted-foreground)]">
-              One link for all guests. Share it on WhatsApp and track responses.
-            </p>
-            <div className="mt-4 flex items-center gap-2">
-              <input
-                readOnly
-                value={rsvpLink}
-                className="flex h-11 w-full border border-[color:var(--border)] bg-[color:var(--card)] px-4 py-2 text-xs transition-colors focus-visible:border-[color:var(--foreground)] focus-visible:outline-none"
-                onFocus={(e) => e.target.select()}
-              />
-              <Button onClick={handleCopy} size="sm" className="shrink-0">
-                {copied ? <CheckCheck className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              </Button>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="label-mono text-[color:var(--primary)]">Per-guest tracked links</p>
+                <p className="mt-2 text-sm text-[color:var(--muted-foreground)]">
+                  {publishedGuests.length} {publishedGuests.length === 1 ? "link" : "links"} generated. Each guest gets a unique URL — you&apos;ll see who opened and who responded.
+                </p>
+              </div>
+              {publishedGuests.length > 1 && (
+                <Button onClick={handleCopyAllLinks} variant="outline" size="sm" className="shrink-0">
+                  {copiedAll ? <CheckCheck className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  Copy all
+                </Button>
+              )}
             </div>
+
+            {/* Guest link list */}
+            <div className="mt-6 max-h-[400px] space-y-2 overflow-y-auto">
+              {publishedGuests.map((g) => (
+                <div key={g.id} className="flex items-center gap-2 border border-[color:var(--border)] p-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{g.name}</p>
+                    <p className="truncate font-[family-name:var(--font-mono)] text-[10px] text-[color:var(--muted-foreground)]">
+                      {guestLink(g)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleCopyGuest(g)}
+                    className="grid h-8 w-8 shrink-0 place-items-center border border-[color:var(--border)] transition-colors hover:border-[color:var(--foreground)]"
+                    aria-label={`Copy link for ${g.name}`}
+                  >
+                    {copiedId === g.id ? (
+                      <CheckCheck className="h-3.5 w-3.5 text-[color:var(--primary)]" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleWhatsAppGuest(g)}
+                    className="grid h-8 w-8 shrink-0 place-items-center border border-[color:var(--border)] transition-colors hover:border-[color:var(--foreground)]"
+                    aria-label={`Share link for ${g.name} on WhatsApp`}
+                  >
+                    <Share2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Quick actions */}
             <div className="mt-4 flex flex-wrap gap-3">
-              <Button onClick={handleWhatsAppShare} size="md">
-                <Share2 className="h-4 w-4" /> Share on WhatsApp
-              </Button>
               <Button href={`/rsvp/${state.orderNumber}`} variant="outline" size="md">
                 <ExternalLink className="h-3.5 w-3.5" /> Preview RSVP page
               </Button>
@@ -134,19 +224,19 @@ export function OrderPhase6Links() {
               <li className="flex gap-3">
                 <span className="grid h-6 w-6 shrink-0 place-items-center border border-[color:var(--foreground)] text-xs font-bold">1</span>
                 <p className="text-sm text-[color:var(--muted-foreground)]">
-                  Share the link with your guests via WhatsApp.
+                  Share each guest&apos;s unique link via WhatsApp using the buttons above.
                 </p>
               </li>
               <li className="flex gap-3">
                 <span className="grid h-6 w-6 shrink-0 place-items-center border border-[color:var(--foreground)] text-xs font-bold">2</span>
                 <p className="text-sm text-[color:var(--muted-foreground)]">
-                  Guests open the link, see your invitation, and RSVP — <strong className="text-[color:var(--foreground)]">attending</strong> or <strong className="text-[color:var(--foreground)]">declined</strong>.
+                  When a guest opens their link, their status changes from <strong className="text-[color:var(--foreground)]">not opened</strong> to <strong className="text-[color:var(--foreground)]">opened</strong> automatically.
                 </p>
               </li>
               <li className="flex gap-3">
                 <span className="grid h-6 w-6 shrink-0 place-items-center border border-[color:var(--foreground)] text-xs font-bold">3</span>
                 <p className="text-sm text-[color:var(--muted-foreground)]">
-                  Track all responses from your <a href="/dashboard" className="text-[color:var(--foreground)] underline">dashboard</a> — who accepted, who declined, and headcount.
+                  Guests RSVP — <strong className="text-[color:var(--foreground)]">attending</strong> or <strong className="text-[color:var(--foreground)]">declined</strong>. Track everything from your <a href="/dashboard" className="text-[color:var(--foreground)] underline">dashboard</a>.
                 </p>
               </li>
             </ol>
