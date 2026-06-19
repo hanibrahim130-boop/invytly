@@ -50,10 +50,9 @@ export const metadata: Metadata = {
     images: [SITE_CONFIG.ogImage],
   },
   icons: {
-    icon: [
-      { url: "/icon.svg", type: "image/svg+xml" },
-      { url: "/favicon.ico", sizes: "any" },
-    ],
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    shortcut: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/icon.svg", type: "image/svg+xml" }],
   },
 };
 
