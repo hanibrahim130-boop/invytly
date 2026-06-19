@@ -1,50 +1,75 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Check, X, Clock, Users, Download, Copy, CheckCheck, Calendar, MapPin, Plus } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/lib/auth-context";
 import {
-  getLatestEvent,
-  getAllGuests,
-  getRSVPStats,
+  subscribeToClientEvents,
+  subscribeToEventGuests,
+  addGuestToFirestore,
+  computeStats,
+  emptyStats,
   exportGuestsCSV,
-  addGuest,
-  type Guest,
+  type FirestoreEvent,
+  type FirestoreGuest,
   type RSVPStatus,
-} from "@/lib/guest-tracking";
+} from "@/lib/firestore";
 import { cn } from "@/lib/utils";
 
 type Filter = "all" | "attending" | "declined" | "pending";
 
 export default function DashboardPage() {
-  const [loaded, setLoaded] = React.useState(false);
-  const [event, setEvent] = React.useState<ReturnType<typeof getLatestEvent>>(null);
-  const [guests, setGuests] = React.useState<Guest[]>([]);
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const [events, setEvents] = React.useState<FirestoreEvent[]>([]);
+  const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  const [guests, setGuests] = React.useState<FirestoreGuest[]>([]);
+  const [eventsLoaded, setEventsLoaded] = React.useState(false);
   const [filter, setFilter] = React.useState<Filter>("all");
   const [copied, setCopied] = React.useState(false);
   const [showAddGuest, setShowAddGuest] = React.useState(false);
   const [newGuestName, setNewGuestName] = React.useState("");
-  const [refreshKey, setRefreshKey] = React.useState(0);
 
+  // Auth gate — clients only see their own events
   React.useEffect(() => {
-    setEvent(getLatestEvent());
-    setGuests(getAllGuests());
-    setLoaded(true);
-  }, [refreshKey]);
+    if (!authLoading && !user) router.replace("/login?redirect=/dashboard");
+  }, [authLoading, user, router]);
 
-  const stats = getRSVPStats();
-  const rsvpLink = event ? `${window.location.origin}/rsvp/${event.orderId}` : "";
+  // Live subscription to this client's events
+  React.useEffect(() => {
+    if (!user) return;
+    const unsub = subscribeToClientEvents(user.uid, (evts) => {
+      setEvents(evts);
+      setEventsLoaded(true);
+      setSelectedId((cur) => cur ?? evts[0]?.orderId ?? null);
+    });
+    return () => unsub();
+  }, [user]);
 
-  const filteredGuests = guests.filter((g) => {
-    if (filter === "all") return true;
-    return g.status === filter;
-  });
+  // Live subscription to the selected event's guests
+  React.useEffect(() => {
+    if (!selectedId) {
+      setGuests([]);
+      return;
+    }
+    const unsub = subscribeToEventGuests(selectedId, (g) => setGuests(g));
+    return () => unsub();
+  }, [selectedId]);
+
+  const event = events.find((e) => e.orderId === selectedId) ?? null;
+  const stats = guests.length ? computeStats(guests) : emptyStats();
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const rsvpLink = event ? `${origin}/rsvp/${event.orderId}` : "";
+
+  const filteredGuests = guests.filter((g) => (filter === "all" ? true : g.status === filter));
 
   const handleExport = () => {
-    const csv = exportGuestsCSV();
+    const csv = exportGuestsCSV(guests);
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -60,18 +85,18 @@ export default function DashboardPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleAddGuest = (e: React.FormEvent) => {
+  const handleAddGuest = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newGuestName.trim()) return;
-    addGuest({
-      name: newGuestName,
+    if (!newGuestName.trim() || !event) return;
+    await addGuestToFirestore({
+      orderId: event.orderId,
+      name: newGuestName.trim(),
       plusOnes: 0,
       status: "pending",
       respondedAt: null,
     });
     setNewGuestName("");
     setShowAddGuest(false);
-    setRefreshKey((k) => k + 1);
   };
 
   const formatDate = (d: string) => {
@@ -83,9 +108,15 @@ export default function DashboardPage() {
     });
   };
 
-  if (!loaded) return null;
+  if (authLoading || !user || !eventsLoaded) {
+    return (
+      <Container className="py-32 text-center">
+        <p className="text-sm text-[color:var(--muted-foreground)]">Loading…</p>
+      </Container>
+    );
+  }
 
-  if (loaded && !event) {
+  if (events.length === 0) {
     return (
       <Container className="py-32 text-center">
         <Users className="mx-auto h-10 w-10 text-[color:var(--muted-foreground)]" />
@@ -112,10 +143,33 @@ export default function DashboardPage() {
   return (
     <>
       <Container className="pt-28 pb-6">
-        <p className="label-mono text-[color:var(--primary)]">Guest tracking</p>
-        <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl tracking-tight sm:text-5xl">
-          Dashboard
-        </h1>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="label-mono text-[color:var(--primary)]">Guest tracking</p>
+            <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl tracking-tight sm:text-5xl">
+              Dashboard
+            </h1>
+          </div>
+          {events.length > 1 && (
+            <div>
+              <Label htmlFor="eventSelect" className="label-mono text-[color:var(--muted-foreground)]">
+                Event
+              </Label>
+              <select
+                id="eventSelect"
+                value={selectedId ?? ""}
+                onChange={(e) => setSelectedId(e.target.value)}
+                className="mt-2 block w-full min-w-[220px] border border-[color:var(--foreground)] bg-[color:var(--background)] px-3 py-2 text-sm"
+              >
+                {events.map((e) => (
+                  <option key={e.orderId} value={e.orderId}>
+                    {e.names || e.orderId} — {e.orderId}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
       </Container>
 
       <div className="rule" />

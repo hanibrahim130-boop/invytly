@@ -19,7 +19,9 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth-context";
 import {
   subscribeToAllEvents,
+  subscribeToAllGuests,
   type FirestoreEvent,
+  type FirestoreGuest,
 } from "@/lib/firestore";
 import { formatCurrency, cn } from "@/lib/utils";
 
@@ -27,6 +29,7 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading, logOut } = useAuth();
   const [events, setEvents] = React.useState<FirestoreEvent[]>([]);
+  const [guests, setGuests] = React.useState<FirestoreGuest[]>([]);
   const [search, setSearch] = React.useState("");
   const [filter, setFilter] = React.useState<"all" | "active" | "completed" | "draft">("all");
 
@@ -38,8 +41,12 @@ export default function AdminDashboardPage() {
 
   React.useEffect(() => {
     if (!user || user.role !== "admin") return;
-    const unsub = subscribeToAllEvents((data) => setEvents(data));
-    return () => unsub();
+    const unsubEvents = subscribeToAllEvents((data) => setEvents(data));
+    const unsubGuests = subscribeToAllGuests((data) => setGuests(data));
+    return () => {
+      unsubEvents();
+      unsubGuests();
+    };
   }, [user]);
 
   if (authLoading || !user) {
@@ -53,8 +60,20 @@ export default function AdminDashboardPage() {
   // Stats
   const totalRevenue = events.reduce((sum, e) => sum + (e.price ?? 0), 0);
   const activeCount = events.filter((e) => e.status === "active").length;
-  const completedCount = events.filter((e) => e.status === "completed").length;
-  const uniqueClients = new Set(events.map((e) => e.contactEmail)).size;
+  const uniqueClients = new Set(events.map((e) => e.clientId || e.contactEmail)).size;
+
+  // Guest aggregation (per event + global headcount)
+  const attendingByEvent = React.useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const g of guests) {
+      if (g.status === "attending") {
+        map[g.orderId] = (map[g.orderId] ?? 0) + 1 + (g.plusOnes ?? 0);
+      }
+    }
+    return map;
+  }, [guests]);
+  const totalHeadcount = Object.values(attendingByEvent).reduce((sum, n) => sum + n, 0);
+  const totalRSVPs = guests.length;
 
   // Filtered events
   const filteredEvents = events.filter((e) => {
@@ -84,7 +103,8 @@ export default function AdminDashboardPage() {
   const stats = [
     { label: "Total revenue", value: formatCurrency(totalRevenue), icon: DollarSign },
     { label: "Active events", value: activeCount, icon: TrendingUp },
-    { label: "Completed", value: completedCount, icon: CheckCircle2 },
+    { label: "Total RSVPs", value: totalRSVPs, icon: CheckCircle2 },
+    { label: "Headcount", value: totalHeadcount, icon: Users },
     { label: "Clients", value: uniqueClients, icon: Users },
   ];
 
@@ -121,7 +141,7 @@ export default function AdminDashboardPage() {
 
       {/* Stats */}
       <Container className="py-8">
-        <div className="grid grid-cols-2 gap-px bg-[color:var(--border)] md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-px bg-[color:var(--border)] md:grid-cols-5">
           {stats.map((s) => (
             <div key={s.label} className="bg-[color:var(--background)] p-6">
               <div className="flex items-center gap-2">
@@ -194,6 +214,7 @@ export default function AdminDashboardPage() {
                   <th className="hidden p-4 text-left label-mono sm:table-cell">Date</th>
                   <th className="hidden p-4 text-left label-mono md:table-cell">Tier</th>
                   <th className="hidden p-4 text-right label-mono md:table-cell">Price</th>
+                  <th className="p-4 text-right label-mono">Attending</th>
                   <th className="p-4 text-left label-mono">Status</th>
                   <th className="hidden p-4 text-left label-mono lg:table-cell">Created</th>
                 </tr>
@@ -220,6 +241,9 @@ export default function AdminDashboardPage() {
                     </td>
                     <td className="hidden p-4 text-right md:table-cell font-medium">
                       {e.price ? formatCurrency(e.price) : "—"}
+                    </td>
+                    <td className="p-4 text-right font-medium">
+                      {attendingByEvent[e.orderId] ?? 0}
                     </td>
                     <td className="p-4">
                       <StatusPill status={e.status} />

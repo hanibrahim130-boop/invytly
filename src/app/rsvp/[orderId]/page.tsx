@@ -9,7 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { DesignPreview } from "@/components/design-preview";
-import { getEvent, addGuest, findGuestByName, updateGuestRSVP, type RSVPStatus } from "@/lib/guest-tracking";
+import {
+  getEventFromFirestore,
+  addGuestToFirestore,
+  findGuestByNameInFirestore,
+  updateGuestRSVPInFirestore,
+  type FirestoreEvent,
+  type RSVPStatus,
+} from "@/lib/firestore";
 import { getDesignById } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
@@ -17,9 +24,10 @@ export default function RSVPPage() {
   const params = useParams();
   const orderId = params.orderId as string;
 
-  const [event, setEvent] = React.useState<ReturnType<typeof getEvent>>(null);
+  const [event, setEvent] = React.useState<FirestoreEvent | null>(null);
   const [loaded, setLoaded] = React.useState(false);
   const [submitted, setSubmitted] = React.useState(false);
+  const [submitting, setSubmitting] = React.useState(false);
   const [status, setStatus] = React.useState<RSVPStatus>("pending");
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
@@ -30,8 +38,20 @@ export default function RSVPPage() {
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
   React.useEffect(() => {
-    setEvent(getEvent(orderId));
-    setLoaded(true);
+    let active = true;
+    getEventFromFirestore(orderId)
+      .then((evt) => {
+        if (active) setEvent(evt);
+      })
+      .catch(() => {
+        if (active) setEvent(null);
+      })
+      .finally(() => {
+        if (active) setLoaded(true);
+      });
+    return () => {
+      active = false;
+    };
   }, [orderId]);
 
   const design = event ? getDesignById(event.designId) : null;
@@ -46,7 +66,7 @@ export default function RSVPPage() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs: Record<string, string> = {};
     if (!name.trim()) errs.name = "Your name is required";
@@ -54,31 +74,43 @@ export default function RSVPPage() {
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
-    const existing = findGuestByName(name);
+    setSubmitting(true);
     const now = new Date().toISOString();
 
-    if (existing) {
-      updateGuestRSVP(existing.id, {
-        status,
-        plusOnes: status === "attending" ? plusOnes : 0,
-        dietaryNotes: status === "attending" ? dietaryNotes : "",
-        message,
-        respondedAt: now,
-      });
-    } else {
-      addGuest({
-        name,
-        email: email || undefined,
-        phone: phone || undefined,
-        plusOnes: status === "attending" ? plusOnes : 0,
-        status,
-        dietaryNotes: status === "attending" ? dietaryNotes : undefined,
-        message: message || undefined,
-        respondedAt: now,
-      });
-    }
+    try {
+      const existing = await findGuestByNameInFirestore(orderId, name);
 
-    setSubmitted(true);
+      if (existing) {
+        await updateGuestRSVPInFirestore(orderId, existing.id, {
+          status,
+          plusOnes: status === "attending" ? plusOnes : 0,
+          dietaryNotes: status === "attending" ? dietaryNotes : "",
+          message,
+          email: email || undefined,
+          phone: phone || undefined,
+          respondedAt: now,
+        });
+      } else {
+        await addGuestToFirestore({
+          orderId,
+          name,
+          email: email || undefined,
+          phone: phone || undefined,
+          plusOnes: status === "attending" ? plusOnes : 0,
+          status,
+          dietaryNotes: status === "attending" ? dietaryNotes : undefined,
+          message: message || undefined,
+          respondedAt: now,
+        });
+      }
+
+      setSubmitted(true);
+    } catch (err) {
+      console.error("Failed to submit RSVP:", err);
+      setErrors({ submit: "Something went wrong. Please try again." });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (!loaded) return null;
@@ -325,8 +357,14 @@ export default function RSVPPage() {
                 />
               </div>
 
-              <Button type="submit" size="lg" className="w-full">
-                Submit RSVP
+              {errors.submit && (
+                <p className="flex items-center gap-1.5 text-sm text-[color:var(--primary)]">
+                  <AlertCircle className="h-4 w-4" /> {errors.submit}
+                </p>
+              )}
+
+              <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+                {submitting ? "Submitting…" : "Submit RSVP"}
               </Button>
             </form>
           </div>

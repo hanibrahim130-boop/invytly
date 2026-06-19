@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { OrderStepper } from "@/components/order/order-stepper";
 import { useOrder, TIERS } from "@/lib/order-context";
 import { getDesignById } from "@/lib/mock-data";
-import { publishEvent } from "@/lib/guest-tracking";
 import { saveEventToFirestore } from "@/lib/firestore";
 import { useAuth } from "@/lib/auth-context";
 import { formatCurrency } from "@/lib/utils";
@@ -21,26 +20,10 @@ export function OrderPhase6Links() {
   const design = state.designId ? getDesignById(state.designId) : null;
   const tier = TIERS.find((t) => t.id === state.tier);
 
-  // Publish event on mount
+  // Persist event to Firestore on mount (order flow is auth-gated, so user exists)
   React.useEffect(() => {
-    if (published || !state.orderNumber || !design) return;
+    if (published || !state.orderNumber || !design || !user) return;
 
-    publishEvent({
-      orderId: state.orderNumber,
-      designId: state.designId!,
-      designName: design.name,
-      eventType: state.eventType,
-      names: state.names,
-      eventDate: state.eventDate,
-      eventTime: state.eventTime,
-      venue: state.venue,
-      message: state.message,
-      contactName: state.contactName,
-      contactEmail: state.contactEmail ?? "",
-      createdAt: new Date().toISOString(),
-    });
-
-    // Also save to Firestore for admin dashboard + persistence
     saveEventToFirestore({
       orderId: state.orderNumber,
       designId: state.designId!,
@@ -57,13 +40,13 @@ export function OrderPhase6Links() {
       price: tier?.price ?? 0,
       status: "active",
       createdAt: new Date().toISOString(),
-      clientId: user?.uid,
-    }).catch(() => {
-      // Non-blocking — localStorage is the fallback
+      clientId: user.uid,
+    }).catch((err) => {
+      console.error("Failed to save event to Firestore:", err);
     });
 
     setPublished(true);
-  }, [published, state.orderNumber, design, state.designId, state.eventType, state.names, state.eventDate, state.eventTime, state.venue, state.message, state.contactName, state.contactEmail]);
+  }, [published, state.orderNumber, design, user, state.designId, state.eventType, state.names, state.eventDate, state.eventTime, state.venue, state.message, state.contactName, state.contactEmail, state.tier, tier]);
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const rsvpLink = state.orderNumber ? `${origin}/rsvp/${state.orderNumber}` : "";

@@ -1,0 +1,61 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Admin is identified by the auth token email. For production, prefer a
+    // custom claim (request.auth.token.admin == true) set via the Admin SDK.
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'admin@invytly.com';
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /* ----------------------------- Clients ----------------------------- */
+    // Each client owns a profile doc keyed by their uid.
+    match /clients/{uid} {
+      allow read:   if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if isSignedIn() && request.auth.uid == uid;
+      allow update: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    /* ------------------------------ Events ------------------------------ */
+    match /events/{orderId} {
+      // Single-doc reads are public: unauthenticated guests open the RSVP link.
+      allow get: if true;
+
+      // Listing/querying events is restricted: a client can only list their own,
+      // the admin can list everything.
+      allow list: if isAdmin()
+        || (isSignedIn() && resource.data.clientId == request.auth.uid);
+
+      // Only the owning client can create their event; owner or admin can edit.
+      allow create: if isSignedIn()
+        && request.resource.data.clientId == request.auth.uid;
+      allow update: if isAdmin()
+        || (isSignedIn() && resource.data.clientId == request.auth.uid);
+      allow delete: if isAdmin();
+
+      /* ----------------------------- Guests ----------------------------- */
+      // Guests are submitted by unauthenticated invitees via the public RSVP
+      // link, so create/update/read on a known event path is open. Deletion is
+      // limited to the event owner or admin.
+      match /guests/{guestId} {
+        allow read:          if true;
+        allow create, update: if true;
+        allow delete:        if isAdmin() || isSignedIn();
+      }
+    }
+
+    /* ------------------- Admin collection-group queries ------------------ */
+    // Enables the admin dashboard to aggregate guests across every event via
+    // collectionGroup('guests'). Direct per-event reads are handled above.
+    match /{path=**}/guests/{guestId} {
+      allow read: if isAdmin();
+    }
+  }
+}

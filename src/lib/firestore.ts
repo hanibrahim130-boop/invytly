@@ -2,19 +2,21 @@
 
 import {
   collection,
+  collectionGroup,
   doc,
-  addDoc,
   setDoc,
+  updateDoc,
   getDoc,
   getDocs,
   query,
   where,
   orderBy,
   onSnapshot,
-  serverTimestamp,
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+
+export type RSVPStatus = "attending" | "declined" | "pending";
 
 export interface FirestoreEvent {
   orderId: string;
@@ -32,14 +34,35 @@ export interface FirestoreEvent {
   price: number;
   status: "active" | "completed" | "draft";
   createdAt: string;
-  clientId?: string;
+  clientId: string;
 }
 
-export async function saveEventToFirestore(
-  event: Omit<FirestoreEvent, "createdAt"> & { createdAt?: string }
-): Promise<void> {
-  const data = { ...event, createdAt: event.createdAt ?? new Date().toISOString() };
-  await setDoc(doc(db, "events", event.orderId), data, { merge: true });
+export interface FirestoreGuest {
+  id: string;
+  orderId: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  plusOnes: number;
+  status: RSVPStatus;
+  dietaryNotes?: string;
+  message?: string;
+  respondedAt: string | null;
+}
+
+export interface RSVPStats {
+  total: number;
+  attending: number;
+  declined: number;
+  pending: number;
+  totalPlusOnes: number;
+  totalHeadcount: number;
+}
+
+/* ----------------------------- Events ----------------------------- */
+
+export async function saveEventToFirestore(event: FirestoreEvent): Promise<void> {
+  await setDoc(doc(db, "events", event.orderId), event, { merge: true });
 }
 
 export async function getEventFromFirestore(orderId: string): Promise<FirestoreEvent | null> {
@@ -47,16 +70,16 @@ export async function getEventFromFirestore(orderId: string): Promise<FirestoreE
   return snap.exists() ? (snap.data() as FirestoreEvent) : null;
 }
 
-export async function getClientEvents(clientId: string): Promise<FirestoreEvent[]> {
+export function subscribeToClientEvents(
+  clientId: string,
+  cb: (events: FirestoreEvent[]) => void
+): Unsubscribe {
   const q = query(collection(db, "events"), where("clientId", "==", clientId));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => d.data() as FirestoreEvent);
-}
-
-export async function getAllEvents(): Promise<FirestoreEvent[]> {
-  const q = query(collection(db, "events"), orderBy("createdAt", "desc"));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => d.data() as FirestoreEvent);
+  return onSnapshot(q, (snap) => {
+    const events = snap.docs.map((d) => d.data() as FirestoreEvent);
+    events.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+    cb(events);
+  });
 }
 
 export function subscribeToAllEvents(cb: (events: FirestoreEvent[]) => void): Unsubscribe {
@@ -66,39 +89,99 @@ export function subscribeToAllEvents(cb: (events: FirestoreEvent[]) => void): Un
   });
 }
 
-export function subscribeToClientEvents(clientId: string, cb: (events: FirestoreEvent[]) => void): Unsubscribe {
-  const q = query(collection(db, "events"), where("clientId", "==", clientId));
-  return onSnapshot(q, (snap) => {
-    cb(snap.docs.map((d) => d.data() as FirestoreEvent));
-  });
+export async function updateEventStatus(
+  orderId: string,
+  status: FirestoreEvent["status"]
+): Promise<void> {
+  await updateDoc(doc(db, "events", orderId), { status });
 }
 
-export async function updateEventStatus(orderId: string, status: FirestoreEvent["status"]): Promise<void> {
-  await setDoc(doc(db, "events", orderId), { status }, { merge: true });
+/* ----------------------------- Guests ----------------------------- */
+
+export async function addGuestToFirestore(
+  guest: Omit<FirestoreGuest, "id">
+): Promise<FirestoreGuest> {
+  const id = `g-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  const newGuest: FirestoreGuest = { ...guest, id };
+  await setDoc(doc(db, "events", guest.orderId, "guests", id), newGuest);
+  return newGuest;
 }
 
-// Guest subcollection
-export interface FirestoreGuest {
-  id: string;
-  name: string;
-  phone?: string;
-  plusOnes: number;
-  status: "attending" | "declined" | "pending";
-  dietaryNotes?: string;
-  message?: string;
-  respondedAt: string | null;
+export async function updateGuestRSVPInFirestore(
+  orderId: string,
+  guestId: string,
+  patch: Partial<Pick<FirestoreGuest, "status" | "plusOnes" | "dietaryNotes" | "message" | "respondedAt" | "email" | "phone">>
+): Promise<void> {
+  await updateDoc(doc(db, "events", orderId, "guests", guestId), patch);
 }
 
-export async function saveGuestsToFirestore(orderId: string, guests: FirestoreGuest[]): Promise<void> {
-  const batch = guests.map((g) =>
-    setDoc(doc(db, "events", orderId, "guests", g.id), g)
-  );
-  await Promise.all(batch);
+export async function findGuestByNameInFirestore(
+  orderId: string,
+  name: string
+): Promise<FirestoreGuest | null> {
+  const normalized = name.trim().toLowerCase();
+  const snap = await getDocs(collection(db, "events", orderId, "guests"));
+  const match = snap.docs
+    .map((d) => d.data() as FirestoreGuest)
+    .find((g) => g.name.trim().toLowerCase() === normalized);
+  return match ?? null;
 }
 
-export function subscribeToEventGuests(orderId: string, cb: (guests: FirestoreGuest[]) => void): Unsubscribe {
+export function subscribeToEventGuests(
+  orderId: string,
+  cb: (guests: FirestoreGuest[]) => void
+): Unsubscribe {
   const q = query(collection(db, "events", orderId, "guests"));
   return onSnapshot(q, (snap) => {
     cb(snap.docs.map((d) => d.data() as FirestoreGuest));
   });
+}
+
+// Admin: all guests across every event via collection group
+export function subscribeToAllGuests(cb: (guests: FirestoreGuest[]) => void): Unsubscribe {
+  const q = query(collectionGroup(db, "guests"));
+  return onSnapshot(q, (snap) => {
+    cb(snap.docs.map((d) => d.data() as FirestoreGuest));
+  });
+}
+
+/* ----------------------------- Stats ----------------------------- */
+
+export function computeStats(guests: FirestoreGuest[]): RSVPStats {
+  const total = guests.length;
+  const attending = guests.filter((g) => g.status === "attending").length;
+  const declined = guests.filter((g) => g.status === "declined").length;
+  const pending = guests.filter((g) => g.status === "pending").length;
+  const totalPlusOnes = guests
+    .filter((g) => g.status === "attending")
+    .reduce((sum, g) => sum + (g.plusOnes ?? 0), 0);
+  return {
+    total,
+    attending,
+    declined,
+    pending,
+    totalPlusOnes,
+    totalHeadcount: attending + totalPlusOnes,
+  };
+}
+
+export function emptyStats(): RSVPStats {
+  return { total: 0, attending: 0, declined: 0, pending: 0, totalPlusOnes: 0, totalHeadcount: 0 };
+}
+
+export function exportGuestsCSV(guests: FirestoreGuest[]): string {
+  const headers = ["Name", "Email", "Phone", "Status", "Plus Ones", "Dietary Notes", "Message", "Responded At"];
+  const rows = guests.map((g) => [
+    g.name,
+    g.email ?? "",
+    g.phone ?? "",
+    g.status,
+    String(g.plusOnes ?? 0),
+    g.dietaryNotes ?? "",
+    g.message ?? "",
+    g.respondedAt ?? "",
+  ]);
+  return [headers, ...rows]
+    .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+    .join("\n");
 }
