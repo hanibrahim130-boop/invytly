@@ -49,7 +49,12 @@ export const metadata: Metadata = {
     description: SITE_CONFIG.description,
     images: [SITE_CONFIG.ogImage],
   },
-  icons: { icon: "/favicon.ico" },
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+  },
 };
 
 export const viewport: Viewport = {
