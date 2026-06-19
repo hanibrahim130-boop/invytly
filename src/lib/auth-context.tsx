@@ -5,6 +5,8 @@ import {
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
   signOut,
   updateProfile,
   type User as FirebaseUser,
@@ -26,6 +28,7 @@ interface AuthContextValue {
   loading: boolean;
   signUp: (email: string, password: string, name: string) => Promise<void>;
   logIn: (email: string, password: string) => Promise<void>;
+  logInWithGoogle: () => Promise<void>;
   logOut: () => Promise<void>;
 }
 
@@ -87,13 +90,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password);
   };
 
+  const logInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    const cred = await signInWithPopup(auth, provider);
+    const fbUser = cred.user;
+    const role: UserRole = fbUser.email === ADMIN_EMAIL ? "admin" : "client";
+    const snap = await getDoc(doc(db, "clients", fbUser.uid));
+    if (!snap.exists()) {
+      await setDoc(doc(db, "clients", fbUser.uid), {
+        name: fbUser.displayName ?? fbUser.email ?? "User",
+        email: fbUser.email,
+        createdAt: new Date().toISOString(),
+      });
+    }
+    setUser({
+      uid: fbUser.uid,
+      email: fbUser.email,
+      displayName: fbUser.displayName,
+      role,
+    });
+  };
+
   const logOut = async () => {
     await signOut(auth);
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signUp, logIn, logOut }}>
+    <AuthContext.Provider value={{ user, loading, signUp, logIn, logInWithGoogle, logOut }}>
       {children}
     </AuthContext.Provider>
   );
