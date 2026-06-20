@@ -17,7 +17,7 @@ export function OrderStepper() {
   const { state, setPhase } = useOrder();
 
   return (
-    <nav aria-label="Order progress" className="flex items-center">
+    <nav aria-label="Order progress" className="flex items-center justify-center sm:justify-start">
       {STEPS.map((step, i) => {
         const isCurrent = state.phase === step.phase;
         const isComplete = state.phase > step.phase;
@@ -32,13 +32,13 @@ export function OrderStepper() {
               aria-current={isCurrent ? "step" : undefined}
               aria-label={`Step ${step.phase}: ${step.label}${isCurrent ? " (current)" : isComplete ? " (complete)" : ""}`}
               className={cn(
-                "flex items-center gap-2.5 transition-opacity",
+                "flex items-center gap-2 transition-opacity sm:gap-2.5",
                 isClickable ? "cursor-pointer hover:opacity-80" : "cursor-default"
               )}
             >
               <span
                 className={cn(
-                  "grid h-8 w-8 place-items-center border text-xs font-bold transition-colors",
+                  "grid h-7 w-7 shrink-0 place-items-center border text-xs font-bold transition-colors sm:h-8 sm:w-8",
                   isCurrent && "border-[color:var(--foreground)] bg-[color:var(--foreground)] text-[color:var(--background)]",
                   isComplete && "border-[color:var(--primary)] bg-[color:var(--primary)] text-[color:var(--primary-foreground)]",
                   !isCurrent && !isComplete && "border-[color:var(--border)] text-[color:var(--muted-foreground)]"
@@ -58,7 +58,7 @@ export function OrderStepper() {
             {i < STEPS.length - 1 && (
               <span
                 className={cn(
-                  "mx-3 h-px w-8 transition-colors sm:w-12",
+                  "mx-1 h-px w-3 shrink-0 transition-colors sm:mx-3 sm:w-12",
                   state.phase > step.phase ? "bg-[color:var(--primary)]" : "bg-[color:var(--border)]"
                 )}
               />
