@@ -12,8 +12,6 @@ import { DesignPreview } from "@/components/design-preview";
 import {
   getEventFromFirestore,
   addGuestToFirestore,
-  findGuestByNameInFirestore,
-  updateGuestRSVPInFirestore,
   type FirestoreEvent,
   type RSVPStatus,
 } from "@/lib/firestore";
@@ -78,32 +76,23 @@ export default function RSVPPage() {
     const now = new Date().toISOString();
 
     try {
-      const existing = await findGuestByNameInFirestore(orderId, name);
-
-      if (existing) {
-        await updateGuestRSVPInFirestore(orderId, existing.id, {
-          status,
-          plusOnes: status === "attending" ? plusOnes : 0,
-          dietaryNotes: status === "attending" ? dietaryNotes : "",
-          message,
-          email: email || undefined,
-          phone: phone || undefined,
-          respondedAt: now,
-        });
-      } else {
-        await addGuestToFirestore({
-          orderId,
-          name,
-          email: email || undefined,
-          phone: phone || undefined,
-          plusOnes: status === "attending" ? plusOnes : 0,
-          status,
-          dietaryNotes: status === "attending" ? dietaryNotes : undefined,
-          message: message || undefined,
-          openedAt: new Date().toISOString(),
-          respondedAt: now,
-        });
-      }
+      // Shared-link submissions always create a new RSVP record. We intentionally
+      // do not look up existing guests by name: name matching is unreliable
+      // (duplicates collide) and listing the guest collection publicly would
+      // expose every invitee's details. Hosts can dedupe from the dashboard, and
+      // guests with a personal per-guest link use the /[guestId] route instead.
+      await addGuestToFirestore({
+        orderId,
+        name: name.trim(),
+        email: email || undefined,
+        phone: phone || undefined,
+        plusOnes: status === "attending" ? plusOnes : 0,
+        status,
+        dietaryNotes: status === "attending" ? dietaryNotes : undefined,
+        message: message || undefined,
+        openedAt: now,
+        respondedAt: now,
+      });
 
       setSubmitted(true);
     } catch (err) {

@@ -173,14 +173,17 @@ export default function DesignsPage() {
         ) : (
           <ul
             className={cn(
-              "mt-6 grid gap-px bg-[color:var(--foreground)]",
+              "group/grid mt-6 grid gap-px bg-[color:var(--foreground)]",
               view === "grid"
                 ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                 : "grid-cols-1"
             )}
           >
             {filtered.map((design) => (
-              <li key={design.id} className="bg-[color:var(--background)]">
+              <li
+                key={design.id}
+                className="relative bg-[color:var(--background)] opacity-100 transition-opacity duration-300 hover:z-10 hover:!opacity-100 group-hover/grid:opacity-40"
+              >
                 <DesignCard design={design} className="border-0 hover:border-0" />
               </li>
             ))}

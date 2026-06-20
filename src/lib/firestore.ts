@@ -7,7 +7,6 @@ import {
   setDoc,
   updateDoc,
   getDoc,
-  getDocs,
   query,
   where,
   orderBy,
@@ -131,18 +130,6 @@ export async function markGuestOpened(orderId: string, guestId: string): Promise
 export async function getGuestFromFirestore(orderId: string, guestId: string): Promise<FirestoreGuest | null> {
   const snap = await getDoc(doc(db, "events", orderId, "guests", guestId));
   return snap.exists() ? (snap.data() as FirestoreGuest) : null;
-}
-
-export async function findGuestByNameInFirestore(
-  orderId: string,
-  name: string
-): Promise<FirestoreGuest | null> {
-  const normalized = name.trim().toLowerCase();
-  const snap = await getDocs(collection(db, "events", orderId, "guests"));
-  const match = snap.docs
-    .map((d) => d.data() as FirestoreGuest)
-    .find((g) => g.name.trim().toLowerCase() === normalized);
-  return match ?? null;
 }
 
 export function subscribeToEventGuests(

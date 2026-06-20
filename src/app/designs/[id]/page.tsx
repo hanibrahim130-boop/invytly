@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowLeft,
   Check,
@@ -20,6 +21,7 @@ import { formatCurrency } from "@/lib/utils";
 
 export default function DesignDetailPage() {
   const params = useParams();
+  const reduce = useReducedMotion() ?? false;
   const id = typeof params.id === "string" ? params.id : "";
   const design = getDesignById(id);
   const related = design ? getRelatedDesigns(design, 3) : [];
@@ -38,7 +40,7 @@ export default function DesignDetailPage() {
   return (
     <>
       {/* Breadcrumb */}
-      <Container className="pt-24">
+      <Container className="pt-20 pb-2">
         <Link
           href="/designs"
           className="label-mono hover-underline inline-flex items-center gap-2 text-[color:var(--muted-foreground)] transition-colors hover:text-[color:var(--foreground)]"
@@ -47,23 +49,29 @@ export default function DesignDetailPage() {
         </Link>
       </Container>
 
-      <Container className="py-10">
-        <div className="grid gap-10 lg:grid-cols-12">
+      <Container className="pb-10">
+        <div className="grid items-center gap-8 lg:min-h-[calc(100svh-8rem)] lg:grid-cols-12 lg:gap-10">
           {/* Image */}
-          <div className="lg:col-span-7">
-            <div className="relative overflow-hidden border border-[color:var(--foreground)] aspect-[4/5] bg-[color:var(--muted)]">
+          <div className="flex justify-center lg:col-span-7">
+            <motion.div
+              initial={reduce ? { opacity: 0 } : { opacity: 0, rotateY: -90, scale: 0.92 }}
+              animate={reduce ? { opacity: 1 } : { opacity: 1, rotateY: 0, scale: 1 }}
+              transition={{ duration: reduce ? 0.01 : 0.85, ease: [0.16, 1, 0.3, 1] }}
+              style={{ transformPerspective: 1400, transformOrigin: "left center" }}
+              className="relative mx-auto aspect-[4/5] h-[58svh] w-auto max-h-[calc(100svh-9rem)] max-w-full overflow-hidden border border-[color:var(--foreground)] bg-[color:var(--muted)] lg:h-[calc(100svh-9rem)]"
+            >
               <DesignPreview design={design} />
 
               <div className="absolute left-4 top-4 z-10 flex flex-wrap gap-2">
                 {design.popular && <Badge variant="primary">Popular</Badge>}
                 {design.new && <Badge variant="default">New</Badge>}
               </div>
-            </div>
+            </motion.div>
           </div>
 
           {/* Details */}
           <div className="lg:col-span-5">
-            <div className="sticky top-24 border-l border-[color:var(--foreground)] pl-6">
+            <div className="border-l border-[color:var(--foreground)] pl-6">
               <p className="label-mono text-[color:var(--primary)]">
                 {design.categoryLabel}
               </p>

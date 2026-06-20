@@ -1,5 +1,3 @@
-import type { LucideIcon } from "lucide-react";
-
 export type DesignStyle = "modern" | "classic" | "minimal" | "floral" | "glam";
 
 export interface Design {

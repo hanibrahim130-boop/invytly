@@ -14,6 +14,25 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // True when the signed-in user owns the parent event of a guest subdoc.
+    function ownsEvent(orderId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/events/$(orderId))
+        && get(/databases/$(database)/documents/events/$(orderId)).data.clientId == request.auth.uid;
+    }
+
+    // Shared validation for guest documents written by unauthenticated invitees.
+    function validGuestStatus(status) {
+      return status in ['not_opened', 'opened', 'attending', 'declined'];
+    }
+
+    function validGuestPayload(orderId, data) {
+      return data.orderId == orderId
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 120
+        && validGuestStatus(data.status)
+        && data.plusOnes is int && data.plusOnes >= 0 && data.plusOnes <= 20;
+    }
+
     /* ----------------------------- Clients ----------------------------- */
     // Each client owns a profile doc keyed by their uid.
     match /clients/{uid} {
@@ -25,7 +44,8 @@ service cloud.firestore {
 
     /* ------------------------------ Events ------------------------------ */
     match /events/{orderId} {
-      // Single-doc reads are public: unauthenticated guests open the RSVP link.
+      // Single-doc reads are public: unauthenticated guests open the RSVP link
+      // and need the event display details (names, date, venue, design).
       allow get: if true;
 
       // Listing/querying events is restricted: a client can only list their own,
@@ -34,20 +54,38 @@ service cloud.firestore {
         || (isSignedIn() && resource.data.clientId == request.auth.uid);
 
       // Only the owning client can create their event; owner or admin can edit.
+      // The clientId is pinned to the creator and cannot be reassigned on update.
       allow create: if isSignedIn()
         && request.resource.data.clientId == request.auth.uid;
       allow update: if isAdmin()
+        || (isSignedIn()
+            && resource.data.clientId == request.auth.uid
+            && request.resource.data.clientId == resource.data.clientId);
+      allow delete: if isAdmin()
         || (isSignedIn() && resource.data.clientId == request.auth.uid);
-      allow delete: if isAdmin();
 
       /* ----------------------------- Guests ----------------------------- */
-      // Guests are submitted by unauthenticated invitees via the public RSVP
-      // link, so create/update/read on a known event path is open. Deletion is
-      // limited to the event owner or admin.
       match /guests/{guestId} {
-        allow read:          if true;
-        allow create, update: if true;
-        allow delete:        if isAdmin() || isSignedIn();
+        // A single guest doc is readable by anyone holding the per-guest link
+        // (the unguessable link id is the access credential).
+        allow get: if true;
+
+        // Bulk listing of an event's guests is limited to the event owner and
+        // admin so the full guest list / PII is never publicly enumerable.
+        allow list: if isAdmin() || ownsEvent(orderId);
+
+        // Invitees submit RSVPs without authentication, but payloads are
+        // validated and cannot be reassigned to another event.
+        allow create: if validGuestPayload(orderId, request.resource.data);
+        allow update: if (isAdmin() || ownsEvent(orderId))
+          || (request.resource.data.orderId == resource.data.orderId
+              && validGuestStatus(request.resource.data.status)
+              && request.resource.data.plusOnes is int
+              && request.resource.data.plusOnes >= 0
+              && request.resource.data.plusOnes <= 20);
+
+        // Deletion is limited to the event owner or admin.
+        allow delete: if isAdmin() || ownsEvent(orderId);
       }
     }
 

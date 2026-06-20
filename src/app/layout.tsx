@@ -3,6 +3,7 @@ import { Inter, Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
+import { ScrollProgress } from "@/components/ui/scroll-progress";
 import { SITE_CONFIG } from "@/lib/config";
 import { AuthProvider } from "@/lib/auth-context";
 
@@ -75,6 +76,7 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col bg-[color:var(--background)] text-[color:var(--foreground)]">
         <AuthProvider>
+          <ScrollProgress />
           <SiteHeader />
           <main className="flex-1">{children}</main>
           <SiteFooter />

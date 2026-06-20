@@ -13,6 +13,8 @@ import { Reveal } from "@/components/ui/reveal";
 import { KineticText } from "@/components/ui/kinetic-text";
 import { Parallax } from "@/components/ui/parallax";
 import { Marquee } from "@/components/ui/marquee";
+import { CountUp } from "@/components/ui/count-up";
+import { Tilt3D } from "@/components/ui/tilt-3d";
 import { CATEGORIES, SITE_CONFIG } from "@/lib/config";
 import { formatCurrency } from "@/lib/utils";
 
@@ -57,7 +59,17 @@ export default function HomePage() {
     <>
       {/* ===== HERO — Magazine cover ===== */}
       <section className="bg-noise relative overflow-hidden border-b border-[color:var(--foreground)] pt-16">
-        <Container className="py-16 md:py-24">
+        {/* Floating 3D accent */}
+        <div
+          aria-hidden
+          className="animate-float pointer-events-none absolute right-[-3rem] top-1/3 z-0 hidden select-none lg:block"
+        >
+          <span className="animate-spin-slow block font-[family-name:var(--font-display)] text-[14rem] leading-none text-[color:var(--primary)] opacity-[0.07]">
+            ✦
+          </span>
+        </div>
+
+        <Container className="relative z-10 py-16 md:py-24">
           {/* Top meta row */}
           <div className="flex items-center justify-between border-b border-[color:var(--border)] pb-4">
             <span className="label-mono text-[color:var(--muted-foreground)]">
@@ -109,14 +121,14 @@ export default function HomePage() {
           {/* Bottom stats row */}
           <div className="mt-16 grid grid-cols-2 gap-px border-y border-[color:var(--foreground)] bg-[color:var(--foreground)] sm:grid-cols-4">
             {[
-              { label: "Designs", value: "120+" },
-              { label: "Hosts", value: "2,000+" },
-              { label: "Avg. delivery", value: "24h" },
-              { label: "RSVP rate", value: "94%" },
+              { label: "Designs", value: 120, suffix: "+" },
+              { label: "Hosts", value: 2000, suffix: "+" },
+              { label: "Avg. delivery", value: 24, suffix: "h" },
+              { label: "RSVP rate", value: 94, suffix: "%" },
             ].map((stat) => (
               <div key={stat.label} className="bg-[color:var(--background)] p-5">
                 <p className="font-[family-name:var(--font-display)] text-3xl tracking-tight">
-                  {stat.value}
+                  <CountUp value={stat.value} suffix={stat.suffix} />
                 </p>
                 <p className="label-mono mt-1 text-[color:var(--muted-foreground)]">
                   {stat.label}
@@ -260,40 +272,42 @@ export default function HomePage() {
       <section className="pb-24 pt-4">
         <Container>
           <Reveal variant="scale" duration={0.8}>
-            <div className="relative overflow-hidden border-2 border-[color:var(--foreground)] bg-[color:var(--foreground)] p-10 text-[color:var(--background)] sm:p-16 md:p-20">
-              <Parallax speed={0.15} className="absolute inset-0">
-                <div className="absolute -right-10 -top-10 font-[family-name:var(--font-display)] text-[12rem] italic leading-none opacity-10">
-                  invite
-                </div>
-              </Parallax>
+            <Tilt3D max={5} scale={1.005} glare={false}>
+              <div className="relative overflow-hidden border-2 border-[color:var(--foreground)] bg-[color:var(--foreground)] p-10 text-[color:var(--background)] sm:p-16 md:p-20">
+                <Parallax speed={0.15} className="absolute inset-0">
+                  <div className="absolute -right-10 -top-10 font-[family-name:var(--font-display)] text-[12rem] italic leading-none opacity-10">
+                    invite
+                  </div>
+                </Parallax>
 
-              <div className="relative z-10 max-w-2xl">
-                <h2 className="font-[family-name:var(--font-display)] text-4xl leading-[1.05] tracking-tight sm:text-5xl md:text-6xl">
-                  Ready to invite <br />
-                  <span className="display-italic text-[color:var(--primary)]">the world?</span>
-                </h2>
-                <p className="mt-5 text-base leading-relaxed opacity-80 sm:text-lg">
-                  Pick a design, share your details, and we&apos;ll have your digital invitation ready to send today.
-                </p>
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <Button
-                    href="/designs"
-                    size="lg"
-                    className="w-full bg-[color:var(--background)] text-[color:var(--foreground)] hover:bg-[color:var(--primary)] hover:text-[color:var(--primary-foreground)] sm:w-auto"
-                  >
-                    Browse designs <ArrowRight className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    href="/custom"
-                    size="lg"
-                    variant="outline"
-                    className="w-full border-[color:var(--background)] text-[color:var(--background)] hover:bg-[color:var(--background)] hover:text-[color:var(--foreground)] sm:w-auto"
-                  >
-                    Talk to a designer
-                  </Button>
+                <div className="relative z-10 max-w-2xl">
+                  <h2 className="font-[family-name:var(--font-display)] text-4xl leading-[1.05] tracking-tight sm:text-5xl md:text-6xl">
+                    Ready to invite <br />
+                    <span className="display-italic text-[color:var(--primary)]">the world?</span>
+                  </h2>
+                  <p className="mt-5 text-base leading-relaxed opacity-80 sm:text-lg">
+                    Pick a design, share your details, and we&apos;ll have your digital invitation ready to send today.
+                  </p>
+                  <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                    <Button
+                      href="/designs"
+                      size="lg"
+                      className="w-full bg-[color:var(--background)] text-[color:var(--foreground)] hover:bg-[color:var(--primary)] hover:text-[color:var(--primary-foreground)] sm:w-auto"
+                    >
+                      Browse designs <ArrowRight className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      href="/custom"
+                      size="lg"
+                      variant="outline"
+                      className="w-full border-[color:var(--background)] text-[color:var(--background)] hover:bg-[color:var(--background)] hover:text-[color:var(--foreground)] sm:w-auto"
+                    >
+                      Talk to a designer
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
+            </Tilt3D>
           </Reveal>
         </Container>
       </section>

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, RefreshCw, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
+import { Check, RefreshCw, ArrowLeft } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { DesignPreview } from "@/components/design-preview";

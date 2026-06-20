@@ -6,7 +6,7 @@ import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { DesignPreview } from "@/components/design-preview";
 import { OrderStepper } from "@/components/order/order-stepper";
-import { useOrder, TIERS } from "@/lib/order-context";
+import { useOrder } from "@/lib/order-context";
 import { getDesignById } from "@/lib/mock-data";
 import { generateDesign } from "@/lib/ai-design-generator";
 
@@ -23,7 +23,6 @@ export function OrderPhase3AI() {
   const [done, setDone] = React.useState(false);
 
   const design = state.designId ? getDesignById(state.designId) : null;
-  const tier = TIERS.find((t) => t.id === state.tier);
 
   const result = React.useMemo(() => {
     if (!design || !state.orderNumber) return null;

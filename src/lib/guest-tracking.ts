@@ -1,7 +1,5 @@
 "use client";
 
-import * as React from "react";
-
 export type RSVPStatus = "not_opened" | "opened" | "attending" | "declined";
 
 export interface Guest {

@@ -49,6 +49,18 @@ export default function AdminDashboardPage() {
     };
   }, [user]);
 
+  // Guest aggregation (per event + global headcount).
+  // NOTE: all hooks must run before any early return to satisfy the Rules of Hooks.
+  const attendingByEvent = React.useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const g of guests) {
+      if (g.status === "attending") {
+        map[g.orderId] = (map[g.orderId] ?? 0) + 1 + (g.plusOnes ?? 0);
+      }
+    }
+    return map;
+  }, [guests]);
+
   if (authLoading || !user) {
     return (
       <Container className="py-32 text-center">
@@ -62,16 +74,6 @@ export default function AdminDashboardPage() {
   const activeCount = events.filter((e) => e.status === "active").length;
   const uniqueClients = new Set(events.map((e) => e.clientId || e.contactEmail)).size;
 
-  // Guest aggregation (per event + global headcount)
-  const attendingByEvent = React.useMemo(() => {
-    const map: Record<string, number> = {};
-    for (const g of guests) {
-      if (g.status === "attending") {
-        map[g.orderId] = (map[g.orderId] ?? 0) + 1 + (g.plusOnes ?? 0);
-      }
-    }
-    return map;
-  }, [guests]);
   const totalHeadcount = Object.values(attendingByEvent).reduce((sum, n) => sum + n, 0);
   const totalRSVPs = guests.length;
 

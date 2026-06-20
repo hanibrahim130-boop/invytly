@@ -3,6 +3,7 @@
 import { Check, ArrowRight, Sparkles } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
+import { Tilt3D } from "@/components/ui/tilt-3d";
 import { cn } from "@/lib/utils";
 
 const TIERS = [
@@ -141,18 +142,20 @@ export default function PricingPage() {
         </div>
 
         {/* FAQ teaser */}
-        <div className="mt-16 border-2 border-[color:var(--foreground)] p-8 text-center sm:p-12">
-          <Sparkles className="mx-auto h-6 w-6 text-[color:var(--primary)]" />
-          <h3 className="mt-4 font-[family-name:var(--font-display)] text-3xl tracking-tight sm:text-4xl">
-            Need a custom quote for <span className="display-italic">bulk events?</span>
-          </h3>
-          <p className="mx-auto mt-3 max-w-lg text-[color:var(--muted-foreground)]">
-            Planning a season of corporate events or a wedding series? We offer volume discounts and retainer packages.
-          </p>
-          <Button href="/contact" variant="outline" className="mt-6">
-            Contact sales
-          </Button>
-        </div>
+        <Tilt3D max={5} scale={1.01} glare={false} className="mt-16">
+          <div className="border-2 border-[color:var(--foreground)] p-8 text-center sm:p-12">
+            <Sparkles className="mx-auto h-6 w-6 text-[color:var(--primary)]" />
+            <h3 className="mt-4 font-[family-name:var(--font-display)] text-3xl tracking-tight sm:text-4xl">
+              Need a custom quote for <span className="display-italic">bulk events?</span>
+            </h3>
+            <p className="mx-auto mt-3 max-w-lg text-[color:var(--muted-foreground)]">
+              Planning a season of corporate events or a wedding series? We offer volume discounts and retainer packages.
+            </p>
+            <Button href="/contact" variant="outline" className="mt-6">
+              Contact sales
+            </Button>
+          </div>
+        </Tilt3D>
       </Container>
     </>
   );

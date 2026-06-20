@@ -53,10 +53,7 @@ export default function DashboardPage() {
 
   // Live subscription to the selected event's guests
   React.useEffect(() => {
-    if (!selectedId) {
-      setGuests([]);
-      return;
-    }
+    if (!selectedId) return;
     const unsub = subscribeToEventGuests(selectedId, (g) => setGuests(g));
     return () => unsub();
   }, [selectedId]);
