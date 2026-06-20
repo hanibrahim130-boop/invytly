@@ -33,6 +33,40 @@ service cloud.firestore {
         && data.plusOnes is int && data.plusOnes >= 0 && data.plusOnes <= 20;
     }
 
+    function validEmail(email) {
+      return email is string
+        && email.size() > 3
+        && email.size() <= 254
+        && email.matches('^[^@ ]+@[^@ ]+[.][^@ ]+$');
+    }
+
+    function validCreatedAt(createdAt) {
+      return createdAt is string
+        && createdAt.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[.][0-9]{3}Z$');
+    }
+
+    function validContactRequest(data) {
+      return data.keys().hasOnly(['name', 'email', 'subject', 'message', 'createdAt'])
+        && data.keys().hasAll(['name', 'email', 'subject', 'message', 'createdAt'])
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 120
+        && validEmail(data.email)
+        && data.subject is string && data.subject.size() > 0 && data.subject.size() <= 160
+        && data.message is string && data.message.size() > 0 && data.message.size() <= 2000
+        && validCreatedAt(data.createdAt);
+    }
+
+    function validCustomDesignRequest(data) {
+      return data.keys().hasOnly(['name', 'email', 'eventType', 'budget', 'vision', 'references', 'createdAt'])
+        && data.keys().hasAll(['name', 'email', 'eventType', 'vision', 'createdAt'])
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 120
+        && validEmail(data.email)
+        && data.eventType is string && data.eventType.size() > 0 && data.eventType.size() <= 80
+        && (!('budget' in data) || (data.budget is string && data.budget.size() <= 80))
+        && data.vision is string && data.vision.size() > 0 && data.vision.size() <= 3000
+        && (!('references' in data) || (data.references is string && data.references.size() <= 2000))
+        && validCreatedAt(data.createdAt);
+    }
+
     /* ----------------------------- Clients ----------------------------- */
     // Each client owns a profile doc keyed by their uid.
     match /clients/{uid} {
@@ -40,6 +74,17 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.auth.uid == uid;
       allow update: if isSignedIn() && (request.auth.uid == uid || isAdmin());
       allow delete: if isAdmin();
+    }
+
+    /* ----------------------------- Requests ----------------------------- */
+    match /contactRequests/{requestId} {
+      allow create: if validContactRequest(request.resource.data);
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /customDesignRequests/{requestId} {
+      allow create: if validCustomDesignRequest(request.resource.data);
+      allow read, update, delete: if isAdmin();
     }
 
     /* ------------------------------ Events ------------------------------ */

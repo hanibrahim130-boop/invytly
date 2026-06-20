@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Reveal } from "@/components/ui/reveal";
+import { saveContactRequestToFirestore } from "@/lib/firestore";
 
 const CHANNELS = [
   {
@@ -32,6 +33,37 @@ const CHANNELS = [
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = React.useState(false);
+  const [submitting, setSubmitting] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const name = String(formData.get("name") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim();
+    const subject = String(formData.get("subject") ?? "").trim();
+    const message = String(formData.get("message") ?? "").trim();
+
+    if (!name || !email || !subject || !message) {
+      setError("Please fill out all required fields.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await saveContactRequestToFirestore({ name, email, subject, message });
+      form.reset();
+      setSubmitted(true);
+    } catch (err) {
+      console.error("Failed to submit contact request:", err);
+      setError("We couldn't send your message. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (submitted) {
     return (
@@ -120,10 +152,7 @@ export default function ContactPage() {
           <div className="lg:col-span-8">
             <Reveal delay={0.15}>
               <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  setSubmitted(true);
-                }}
+                onSubmit={handleSubmit}
                 className="border border-[color:var(--foreground)] bg-[color:var(--card)] p-8"
               >
                 <div className="grid gap-6 sm:grid-cols-2">
@@ -153,9 +182,15 @@ export default function ContactPage() {
                   />
                 </div>
 
-                <Button type="submit" size="lg" className="mt-8 w-full">
+                {error && (
+                  <p className="mt-6 text-sm text-[color:var(--primary)]" role="alert">
+                    {error}
+                  </p>
+                )}
+
+                <Button type="submit" size="lg" className="mt-8 w-full" disabled={submitting}>
                   <Send className="mr-2 h-4 w-4" />
-                  Send message
+                  {submitting ? "Sending..." : "Send message"}
                 </Button>
               </form>
             </Reveal>

@@ -29,11 +29,30 @@ export interface FirestoreEvent {
   message: string;
   contactName: string;
   contactEmail: string;
+  contactPhone?: string;
   tier: string;
   price: number;
   status: "active" | "completed" | "draft";
   createdAt: string;
   clientId: string;
+}
+
+export interface ContactRequest {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  createdAt: string;
+}
+
+export interface CustomDesignRequest {
+  name: string;
+  email: string;
+  eventType: string;
+  budget?: string;
+  vision: string;
+  references?: string;
+  createdAt: string;
 }
 
 export interface FirestoreGuest {
@@ -96,6 +115,22 @@ export async function updateEventStatus(
   status: FirestoreEvent["status"]
 ): Promise<void> {
   await updateDoc(doc(db, "events", orderId), { status });
+}
+
+/* ----------------------------- Requests ----------------------------- */
+
+export async function saveContactRequestToFirestore(
+  request: Omit<ContactRequest, "createdAt">
+): Promise<void> {
+  const ref = doc(collection(db, "contactRequests"));
+  await setDoc(ref, { ...request, createdAt: new Date().toISOString() });
+}
+
+export async function saveCustomDesignRequestToFirestore(
+  request: Omit<CustomDesignRequest, "createdAt">
+): Promise<void> {
+  const ref = doc(collection(db, "customDesignRequests"));
+  await setDoc(ref, { ...request, createdAt: new Date().toISOString() });
 }
 
 /* ----------------------------- Guests ----------------------------- */

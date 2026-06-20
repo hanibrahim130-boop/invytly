@@ -177,7 +177,7 @@ export default function HomePage() {
               <li key={slug} className="bg-[color:var(--background)]">
                 <Reveal variant="up" delay={i * 0.05} duration={0.6}>
                   <Link
-                    href={`/categories/${slug}`}
+                    href={slug === "custom" ? "/custom" : `/designs?category=${slug}`}
                     className="group flex h-full flex-col p-6 transition-colors hover:bg-[color:var(--foreground)] hover:text-[color:var(--background)]"
                   >
                     <Icon className="h-6 w-6 transition-transform duration-200 group-hover:scale-110" />

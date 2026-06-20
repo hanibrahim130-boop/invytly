@@ -9,6 +9,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth-context";
 
+const DEFAULT_REDIRECT = "/dashboard";
+const CONTROL_CHAR_PATTERN = /[\u0000-\u001F\u007F]/;
+const ENCODED_UNSAFE_CHAR_PATTERN = /%(?:0[0-9a-f]|1[0-9a-f]|2f|5c|7f)/i;
+const SCHEME_AFTER_SLASH_PATTERN = /^\/[a-z][a-z\d+.-]*:/i;
+
+function sanitizeRedirect(rawRedirect: string | null): string {
+  if (!rawRedirect || rawRedirect.trim() !== rawRedirect) return DEFAULT_REDIRECT;
+  if (!rawRedirect.startsWith("/") || rawRedirect.startsWith("//")) return DEFAULT_REDIRECT;
+  if (rawRedirect.includes("\\") || CONTROL_CHAR_PATTERN.test(rawRedirect)) return DEFAULT_REDIRECT;
+  if (ENCODED_UNSAFE_CHAR_PATTERN.test(rawRedirect)) return DEFAULT_REDIRECT;
+  if (SCHEME_AFTER_SLASH_PATTERN.test(rawRedirect)) return DEFAULT_REDIRECT;
+
+  return rawRedirect;
+}
+
 export default function LoginPage() {
   return (
     <React.Suspense fallback={null}>
@@ -27,7 +42,7 @@ function LoginContent() {
   const [loading, setLoading] = React.useState(false);
   const [googleLoading, setGoogleLoading] = React.useState(false);
 
-  const redirectTo = params.get("redirect") ?? "/dashboard";
+  const redirectTo = sanitizeRedirect(params.get("redirect"));
 
   React.useEffect(() => {
     if (user) {

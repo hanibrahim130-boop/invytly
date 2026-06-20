@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Invyty icon">
+  <rect width="96" height="96" rx="24" fill="#1f1a17"/>
+  <path d="M24 26h48v44H24z" fill="#f4f1ec"/>
+  <path d="M24 26l24 22 24-22" fill="none" stroke="#c86f49" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M34 63h28" stroke="#1f1a17" stroke-width="6" stroke-linecap="round"/>
+</svg>

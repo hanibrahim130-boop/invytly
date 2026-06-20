@@ -1,195 +1,25 @@
-"use client";
-
-import * as React from "react";
-import { Search, SlidersHorizontal, Grid3X3, LayoutList } from "lucide-react";
-import { Container } from "@/components/ui/container";
-import { Input } from "@/components/ui/input";
-import { DesignCard } from "@/components/design-card";
-import { DESIGNS, type DesignStyle } from "@/lib/mock-data";
+import { DesignsBrowser } from "@/components/designs/designs-browser";
 import { CATEGORIES } from "@/lib/config";
-import { cn } from "@/lib/utils";
 
-const ALL_STYLES: DesignStyle[] = ["modern", "classic", "minimal", "floral", "glam"];
+type DesignsPageProps = {
+  searchParams: Promise<{
+    category?: string | string[];
+  }>;
+};
 
-export default function DesignsPage() {
-  const [search, setSearch] = React.useState("");
-  const [activeCategory, setActiveCategory] = React.useState("all");
-  const [activeStyle, setActiveStyle] = React.useState<string>("all");
-  const [view, setView] = React.useState<"grid" | "list">("grid");
+const FILTERABLE_CATEGORIES = new Set(
+  CATEGORIES.filter((category) => category.slug !== "custom").map(
+    (category) => category.slug
+  )
+);
 
-  const filtered = React.useMemo(() => {
-    return DESIGNS.filter((d) => {
-      const matchesSearch =
-        !search ||
-        d.name.toLowerCase().includes(search.toLowerCase()) ||
-        d.description.toLowerCase().includes(search.toLowerCase());
-      const matchesCategory =
-        activeCategory === "all" || d.category === activeCategory;
-      const matchesStyle =
-        activeStyle === "all" || d.style === activeStyle;
-      return matchesSearch && matchesCategory && matchesStyle;
-    });
-  }, [search, activeCategory, activeStyle]);
+function getInitialCategory(category: string | string[] | undefined) {
+  const slug = Array.isArray(category) ? category[0] : category;
+  return slug && FILTERABLE_CATEGORIES.has(slug) ? slug : "all";
+}
 
-  return (
-    <>
-      <section className="border-b border-[color:var(--foreground)] pt-16">
-        <Container className="py-14">
-          <span className="label-mono text-[color:var(--primary)]">
-            Browse all
-          </span>
-          <h1 className="mt-3 font-[family-name:var(--font-display)] text-5xl leading-[0.95] tracking-tight sm:text-6xl md:text-7xl">
-            Invitation <span className="display-italic">designs</span>
-          </h1>
-          <p className="mt-5 max-w-xl text-base leading-relaxed text-[color:var(--muted-foreground)]">
-            Every design includes a hosted RSVP page, WhatsApp-optimized sharing, and a downloadable PDF.
-          </p>
-        </Container>
-      </section>
+export default async function DesignsPage({ searchParams }: DesignsPageProps) {
+  const params = await searchParams;
 
-      <Container className="py-10">
-        {/* Search + filters */}
-        <div className="flex flex-col gap-4 border-b border-[color:var(--border)] pb-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative max-w-sm flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted-foreground)]" />
-            <Input
-              placeholder="Search designs..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setView("grid")}
-              className={cn(
-                "grid h-9 w-9 place-items-center border transition-colors",
-                view === "grid"
-                  ? "border-[color:var(--foreground)] bg-[color:var(--foreground)] text-[color:var(--background)]"
-                  : "border-[color:var(--border)] text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)]"
-              )}
-              aria-label="Grid view"
-            >
-              <Grid3X3 className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setView("list")}
-              className={cn(
-                "grid h-9 w-9 place-items-center border transition-colors",
-                view === "list"
-                  ? "border-[color:var(--foreground)] bg-[color:var(--foreground)] text-[color:var(--background)]"
-                  : "border-[color:var(--border)] text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)]"
-              )}
-              aria-label="List view"
-            >
-              <LayoutList className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Category pills */}
-        <div className="mt-6 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setActiveCategory("all")}
-            className={cn(
-              "border px-3.5 py-1.5 text-sm transition-colors",
-              activeCategory === "all"
-                ? "border-[color:var(--foreground)] bg-[color:var(--foreground)] text-[color:var(--background)]"
-                : "border-[color:var(--border)] text-[color:var(--muted-foreground)] hover:border-[color:var(--foreground)] hover:text-[color:var(--foreground)]"
-            )}
-          >
-            All
-          </button>
-          {CATEGORIES.filter((c) => c.slug !== "custom").map((c) => (
-            <button
-              key={c.slug}
-              type="button"
-              onClick={() => setActiveCategory(c.slug)}
-              className={cn(
-                "border px-3.5 py-1.5 text-sm transition-colors",
-                activeCategory === c.slug
-                  ? "border-[color:var(--foreground)] bg-[color:var(--foreground)] text-[color:var(--background)]"
-                  : "border-[color:var(--border)] text-[color:var(--muted-foreground)] hover:border-[color:var(--foreground)] hover:text-[color:var(--foreground)]"
-              )}
-            >
-              {c.name}
-            </button>
-          ))}
-        </div>
-
-        {/* Style pills */}
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="label-mono text-[color:var(--muted-foreground)]">
-            <SlidersHorizontal className="mr-1 inline h-3 w-3" />
-            Style:
-          </span>
-          <button
-            type="button"
-            onClick={() => setActiveStyle("all")}
-            className={cn(
-              "label-mono border px-2.5 py-1 transition-colors capitalize",
-              activeStyle === "all"
-                ? "border-[color:var(--foreground)] bg-[color:var(--foreground)] text-[color:var(--background)]"
-                : "border-[color:var(--border)] text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)]"
-            )}
-          >
-            All
-          </button>
-          {ALL_STYLES.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setActiveStyle(s)}
-              className={cn(
-                "label-mono border px-2.5 py-1 transition-colors capitalize",
-                activeStyle === s
-                  ? "border-[color:var(--foreground)] bg-[color:var(--foreground)] text-[color:var(--background)]"
-                  : "border-[color:var(--border)] text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)]"
-              )}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-
-        {/* Results */}
-        <div className="mt-8 flex items-center justify-between">
-          <p className="label-mono text-[color:var(--muted-foreground)]">
-            {filtered.length} design{filtered.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-
-        {filtered.length === 0 ? (
-          <div className="mt-12 border border-[color:var(--border)] p-12 text-center">
-            <p className="text-lg font-medium">No designs found</p>
-            <p className="mt-1 text-sm text-[color:var(--muted-foreground)]">
-              Try adjusting your filters or search query.
-            </p>
-          </div>
-        ) : (
-          <ul
-            className={cn(
-              "group/grid mt-6 grid gap-px bg-[color:var(--foreground)]",
-              view === "grid"
-                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                : "grid-cols-1"
-            )}
-          >
-            {filtered.map((design) => (
-              <li
-                key={design.id}
-                className="relative bg-[color:var(--background)] opacity-100 transition-opacity duration-300 hover:z-10 hover:!opacity-100 group-hover/grid:opacity-40"
-              >
-                <DesignCard design={design} className="border-0 hover:border-0" />
-              </li>
-            ))}
-          </ul>
-        )}
-      </Container>
-    </>
-  );
+  return <DesignsBrowser initialCategory={getInitialCategory(params.category)} />;
 }

@@ -16,7 +16,7 @@ export const SITE_CONFIG = {
   description:
     "Browse stunning invitation designs, share event details, and send a private RSVP link to your guests on WhatsApp.",
   url: "https://invyty.bundlyplus.com",
-  ogImage: "/og.png",
+  ogImage: "/og.svg",
   supportEmail: "hello@invyty.bundlyplus.com",
   whatsapp: "+10000000000",
   currency: "USD",

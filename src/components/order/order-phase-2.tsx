@@ -14,6 +14,7 @@ import { CATEGORIES } from "@/lib/config";
 import { cn } from "@/lib/utils";
 
 const MAX_MESSAGE = 500;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function OrderPhase2() {
   const { state, update, setPhase, generateOrderNumber } = useOrder();
@@ -24,14 +25,26 @@ export function OrderPhase2() {
     if (!state.names.trim()) e.names = "Names are required";
     if (!state.eventDate) e.eventDate = "Date is required";
     if (!state.venue.trim()) e.venue = "Venue is required";
+    if (!state.contactName.trim()) e.contactName = "Contact name is required";
+    if (!state.contactEmail.trim()) {
+      e.contactEmail = "Contact email is required";
+    } else if (!EMAIL_PATTERN.test(state.contactEmail.trim())) {
+      e.contactEmail = "Enter a valid email";
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const handleContinue = () => {
     if (validate()) {
+      const contactName = state.contactName.trim();
+      const contactEmail = state.contactEmail.trim();
+      const contactPhone = state.contactPhone.trim();
+
       if (!state.orderNumber) {
-        update({ orderNumber: generateOrderNumber() });
+        update({ contactName, contactEmail, contactPhone, orderNumber: generateOrderNumber() });
+      } else {
+        update({ contactName, contactEmail, contactPhone });
       }
       setPhase(3);
     }
@@ -157,6 +170,62 @@ export function OrderPhase2() {
               <p className="mt-1.5 text-right text-xs text-[color:var(--muted-foreground)]">
                 {state.message.length} / {MAX_MESSAGE}
               </p>
+            </div>
+
+            {/* Contact details */}
+            <div className="border-t border-[color:var(--border)] pt-6">
+              <p className="label-mono text-[color:var(--primary)]">Order contact</p>
+              <p className="mt-2 text-sm text-[color:var(--muted-foreground)]">
+                We use this for your order confirmation and any follow-up questions.
+              </p>
+              <div className="mt-5 grid gap-6 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor="contactName">
+                    Contact name <span className="text-[color:var(--primary)]">*</span>
+                  </Label>
+                  <Input
+                    id="contactName"
+                    value={state.contactName}
+                    onChange={(e) => update({ contactName: e.target.value })}
+                    placeholder="Jane Doe"
+                    className={cn("mt-2", errors.contactName && "border-[color:var(--primary)]")}
+                  />
+                  {errors.contactName && (
+                    <p className="mt-1.5 flex items-center gap-1.5 text-xs text-[color:var(--primary)]">
+                      <AlertCircle className="h-3 w-3" /> {errors.contactName}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="contactEmail">
+                    Contact email <span className="text-[color:var(--primary)]">*</span>
+                  </Label>
+                  <Input
+                    id="contactEmail"
+                    type="email"
+                    value={state.contactEmail}
+                    onChange={(e) => update({ contactEmail: e.target.value })}
+                    placeholder="jane@example.com"
+                    className={cn("mt-2", errors.contactEmail && "border-[color:var(--primary)]")}
+                  />
+                  {errors.contactEmail && (
+                    <p className="mt-1.5 flex items-center gap-1.5 text-xs text-[color:var(--primary)]">
+                      <AlertCircle className="h-3 w-3" /> {errors.contactEmail}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="mt-6">
+                <Label htmlFor="contactPhone">Contact phone</Label>
+                <Input
+                  id="contactPhone"
+                  type="tel"
+                  value={state.contactPhone}
+                  onChange={(e) => update({ contactPhone: e.target.value })}
+                  placeholder="Optional"
+                  className="mt-2"
+                />
+              </div>
             </div>
           </div>
 

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Invyty digital invitations">
+  <rect width="1200" height="630" fill="#f4f1ec"/>
+  <path d="M80 80h1040v470H80z" fill="#1f1a17"/>
+  <path d="M128 128h944v374H128z" fill="#f4f1ec"/>
+  <path d="M152 152h338v302H152z" fill="#c86f49"/>
+  <path d="M197 206h248M197 254h178M197 352h216" stroke="#f4f1ec" stroke-width="18" stroke-linecap="round"/>
+  <text x="548" y="255" fill="#1f1a17" font-family="Georgia, serif" font-size="92" font-weight="700">Invyty</text>
+  <text x="552" y="326" fill="#1f1a17" font-family="Arial, sans-serif" font-size="34" letter-spacing="4">DIGITAL INVITATIONS</text>
+  <text x="552" y="398" fill="#5c5149" font-family="Arial, sans-serif" font-size="30">Beautiful RSVP-ready invitations, delivered in hours.</text>
+  <circle cx="1008" cy="192" r="34" fill="#c86f49"/>
+  <path d="M1008 138v108M954 192h108" stroke="#f4f1ec" stroke-width="12" stroke-linecap="round"/>
+</svg>

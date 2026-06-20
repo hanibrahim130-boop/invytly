@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { CATEGORIES } from "@/lib/config";
+import { saveCustomDesignRequestToFirestore } from "@/lib/firestore";
 
 const STEPS = [
   { icon: MessageSquare, title: "Tell us your vision", body: "Describe your theme, mood, colors, and any references." },
@@ -23,6 +24,46 @@ const EVENT_OPTIONS = CATEGORIES
 
 export default function CustomPage() {
   const [submitted, setSubmitted] = React.useState(false);
+  const [submitting, setSubmitting] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const name = String(formData.get("name") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim();
+    const eventType = String(formData.get("eventType") ?? "").trim();
+    const budget = String(formData.get("budget") ?? "").trim();
+    const vision = String(formData.get("vision") ?? "").trim();
+    const references = String(formData.get("references") ?? "").trim();
+
+    if (!name || !email || !eventType || !vision) {
+      setError("Please fill out all required fields.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await saveCustomDesignRequestToFirestore({
+        name,
+        email,
+        eventType,
+        budget: budget || undefined,
+        vision,
+        references: references || undefined,
+      });
+      form.reset();
+      setSubmitted(true);
+    } catch (err) {
+      console.error("Failed to submit custom design request:", err);
+      setError("We couldn't send your brief. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (submitted) {
     return (
@@ -64,19 +105,16 @@ export default function CustomPage() {
           <div className="border border-[color:var(--foreground)] p-7 sm:p-8">
             <form
               className="space-y-6"
-              onSubmit={(e) => {
-                e.preventDefault();
-                setSubmitted(true);
-              }}
+              onSubmit={handleSubmit}
             >
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full name</Label>
-                  <Input id="name" placeholder="Your name" required />
+                  <Input id="name" name="name" placeholder="Your name" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="you@example.com" required />
+                  <Input id="email" name="email" type="email" placeholder="you@example.com" required />
                 </div>
               </div>
 
@@ -85,6 +123,7 @@ export default function CustomPage() {
                   <Label htmlFor="event-type">Event type</Label>
                   <Select
                     id="event-type"
+                    name="eventType"
                     options={EVENT_OPTIONS}
                     defaultValue=""
                     required
@@ -96,7 +135,7 @@ export default function CustomPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="budget">Budget (USD)</Label>
-                  <Input id="budget" type="number" placeholder="99" min={29} />
+                  <Input id="budget" name="budget" type="number" placeholder="99" min={29} />
                 </div>
               </div>
 
@@ -104,6 +143,7 @@ export default function CustomPage() {
                 <Label htmlFor="vision">Describe your vision</Label>
                 <Textarea
                   id="vision"
+                  name="vision"
                   placeholder="Theme, colors, mood, style references, anything that inspires you..."
                   rows={5}
                   required
@@ -114,13 +154,20 @@ export default function CustomPage() {
                 <Label htmlFor="references">Reference links (optional)</Label>
                 <Textarea
                   id="references"
+                  name="references"
                   placeholder="Pinterest links, mood boards, or image URLs..."
                   rows={2}
                 />
               </div>
 
-              <Button type="submit" size="lg" className="w-full">
-                <Wand2 className="h-4 w-4" /> Submit brief
+              {error && (
+                <p className="text-sm text-[color:var(--primary)]" role="alert">
+                  {error}
+                </p>
+              )}
+
+              <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+                <Wand2 className="h-4 w-4" /> {submitting ? "Submitting..." : "Submit brief"}
               </Button>
               <p className="label-mono text-center text-[color:var(--muted-foreground)]">
                 Typical response time: under 24 hours. No payment required to start the conversation.

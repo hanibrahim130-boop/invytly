@@ -15,10 +15,10 @@ const COLS = [
   {
     title: "Occasions",
     links: [
-      { href: "/categories/weddings", label: "Weddings" },
-      { href: "/categories/birthdays", label: "Birthdays" },
-      { href: "/categories/baby-showers", label: "Baby showers" },
-      { href: "/categories/corporate", label: "Corporate" },
+      { href: "/designs?category=weddings", label: "Weddings" },
+      { href: "/designs?category=birthdays", label: "Birthdays" },
+      { href: "/designs?category=baby-showers", label: "Baby showers" },
+      { href: "/designs?category=corporate", label: "Corporate" },
     ],
   },
   {
