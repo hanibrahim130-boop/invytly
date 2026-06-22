@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Try to fetch client profile from Firestore
       let displayName = fbUser.displayName;
-      if (!displayName) {
+      if (!displayName && db) {
         const snap = await getDoc(doc(db, "clients", fbUser.uid));
         if (snap.exists()) {
           displayName = snap.data().name ?? null;
@@ -71,6 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, name: string) => {
+    if (!auth || !db) throw new Error("Firebase is not configured.");
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName: name });
     await setDoc(doc(db, "clients", cred.user.uid), {
@@ -87,10 +88,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logIn = async (email: string, password: string) => {
+    if (!auth) throw new Error("Firebase is not configured.");
     await signInWithEmailAndPassword(auth, email, password);
   };
 
   const logInWithGoogle = async () => {
+    if (!auth || !db) throw new Error("Firebase is not configured.");
     const provider = new GoogleAuthProvider();
     const cred = await signInWithPopup(auth, provider);
     const fbUser = cred.user;
@@ -112,6 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logOut = async () => {
+    if (!auth) throw new Error("Firebase is not configured.");
     await signOut(auth);
     setUser(null);
   };

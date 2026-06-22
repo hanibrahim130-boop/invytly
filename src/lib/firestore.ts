@@ -11,9 +11,16 @@ import {
   where,
   orderBy,
   onSnapshot,
+  type Firestore,
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+
+/** Asserts that Firestore is initialised (requires Firebase env vars to be set). */
+function requireDb(): Firestore {
+  if (!db) throw new Error("Firestore is not configured. Set NEXT_PUBLIC_FIREBASE_* env vars.");
+  return db;
+}
 
 export type RSVPStatus = "not_opened" | "opened" | "attending" | "declined";
 
@@ -83,11 +90,11 @@ export interface RSVPStats {
 /* ----------------------------- Events ----------------------------- */
 
 export async function saveEventToFirestore(event: FirestoreEvent): Promise<void> {
-  await setDoc(doc(db, "events", event.orderId), event, { merge: true });
+  await setDoc(doc(requireDb(), "events", event.orderId), event, { merge: true });
 }
 
 export async function getEventFromFirestore(orderId: string): Promise<FirestoreEvent | null> {
-  const snap = await getDoc(doc(db, "events", orderId));
+  const snap = await getDoc(doc(requireDb(), "events", orderId));
   return snap.exists() ? (snap.data() as FirestoreEvent) : null;
 }
 
@@ -95,7 +102,7 @@ export function subscribeToClientEvents(
   clientId: string,
   cb: (events: FirestoreEvent[]) => void
 ): Unsubscribe {
-  const q = query(collection(db, "events"), where("clientId", "==", clientId));
+  const q = query(collection(requireDb(), "events"), where("clientId", "==", clientId));
   return onSnapshot(q, (snap) => {
     const events = snap.docs.map((d) => d.data() as FirestoreEvent);
     events.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
@@ -104,7 +111,7 @@ export function subscribeToClientEvents(
 }
 
 export function subscribeToAllEvents(cb: (events: FirestoreEvent[]) => void): Unsubscribe {
-  const q = query(collection(db, "events"), orderBy("createdAt", "desc"));
+  const q = query(collection(requireDb(), "events"), orderBy("createdAt", "desc"));
   return onSnapshot(q, (snap) => {
     cb(snap.docs.map((d) => d.data() as FirestoreEvent));
   });
@@ -114,7 +121,7 @@ export async function updateEventStatus(
   orderId: string,
   status: FirestoreEvent["status"]
 ): Promise<void> {
-  await updateDoc(doc(db, "events", orderId), { status });
+  await updateDoc(doc(requireDb(), "events", orderId), { status });
 }
 
 /* ----------------------------- Requests ----------------------------- */
@@ -122,14 +129,14 @@ export async function updateEventStatus(
 export async function saveContactRequestToFirestore(
   request: Omit<ContactRequest, "createdAt">
 ): Promise<void> {
-  const ref = doc(collection(db, "contactRequests"));
+  const ref = doc(collection(requireDb(), "contactRequests"));
   await setDoc(ref, { ...request, createdAt: new Date().toISOString() });
 }
 
 export async function saveCustomDesignRequestToFirestore(
   request: Omit<CustomDesignRequest, "createdAt">
 ): Promise<void> {
-  const ref = doc(collection(db, "customDesignRequests"));
+  const ref = doc(collection(requireDb(), "customDesignRequests"));
   await setDoc(ref, { ...request, createdAt: new Date().toISOString() });
 }
 
@@ -140,7 +147,7 @@ export async function addGuestToFirestore(
 ): Promise<FirestoreGuest> {
   const id = `g-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   const newGuest: FirestoreGuest = { ...guest, id };
-  await setDoc(doc(db, "events", guest.orderId, "guests", id), newGuest);
+  await setDoc(doc(requireDb(), "events", guest.orderId, "guests", id), newGuest);
   return newGuest;
 }
 
@@ -149,11 +156,11 @@ export async function updateGuestRSVPInFirestore(
   guestId: string,
   patch: Partial<Pick<FirestoreGuest, "status" | "plusOnes" | "dietaryNotes" | "message" | "respondedAt" | "email" | "phone" | "openedAt">>
 ): Promise<void> {
-  await updateDoc(doc(db, "events", orderId, "guests", guestId), patch);
+  await updateDoc(doc(requireDb(), "events", orderId, "guests", guestId), patch);
 }
 
 export async function markGuestOpened(orderId: string, guestId: string): Promise<void> {
-  const ref = doc(db, "events", orderId, "guests", guestId);
+  const ref = doc(requireDb(), "events", orderId, "guests", guestId);
   const snap = await getDoc(ref);
   if (!snap.exists()) return;
   const data = snap.data() as FirestoreGuest;
@@ -163,7 +170,7 @@ export async function markGuestOpened(orderId: string, guestId: string): Promise
 }
 
 export async function getGuestFromFirestore(orderId: string, guestId: string): Promise<FirestoreGuest | null> {
-  const snap = await getDoc(doc(db, "events", orderId, "guests", guestId));
+  const snap = await getDoc(doc(requireDb(), "events", orderId, "guests", guestId));
   return snap.exists() ? (snap.data() as FirestoreGuest) : null;
 }
 
@@ -171,7 +178,7 @@ export function subscribeToEventGuests(
   orderId: string,
   cb: (guests: FirestoreGuest[]) => void
 ): Unsubscribe {
-  const q = query(collection(db, "events", orderId, "guests"));
+  const q = query(collection(requireDb(), "events", orderId, "guests"));
   return onSnapshot(q, (snap) => {
     cb(snap.docs.map((d) => d.data() as FirestoreGuest));
   });
@@ -179,7 +186,7 @@ export function subscribeToEventGuests(
 
 // Admin: all guests across every event via collection group
 export function subscribeToAllGuests(cb: (guests: FirestoreGuest[]) => void): Unsubscribe {
-  const q = query(collectionGroup(db, "guests"));
+  const q = query(collectionGroup(requireDb(), "guests"));
   return onSnapshot(q, (snap) => {
     cb(snap.docs.map((d) => d.data() as FirestoreGuest));
   });
