@@ -1,33 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
 import { SITE_CONFIG } from "@/lib/config";
 import { AuthProvider } from "@/lib/auth-context";
-
-const sans = Inter({
-  variable: "--font-sans-display",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const display = Fraunces({
-  variable: "--font-display",
-  subsets: ["latin"],
-  display: "swap",
-  weight: "variable",
-  style: ["normal", "italic"],
-  axes: ["opsz", "SOFT", "WONK"],
-});
-
-const mono = JetBrains_Mono({
-  variable: "--font-mono-display",
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["400", "500", "600"],
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_CONFIG.url),
@@ -72,8 +49,16 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${sans.variable} ${display.variable} ${mono.variable} h-full antialiased`}
+      className="h-full antialiased"
     >
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1;1,9..144,100..900,0..100,0..1&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        />
+      </head>
       <body className="flex min-h-full flex-col bg-[color:var(--background)] text-[color:var(--foreground)]">
         <AuthProvider>
           <ScrollProgress />
