@@ -30,6 +30,7 @@ export default function DashboardPage() {
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [guests, setGuests] = React.useState<FirestoreGuest[]>([]);
   const [eventsLoaded, setEventsLoaded] = React.useState(false);
+  const [dashboardError, setDashboardError] = React.useState("");
   const [filter, setFilter] = React.useState<Filter>("all");
   const [copied, setCopied] = React.useState(false);
   const [showAddGuest, setShowAddGuest] = React.useState(false);
@@ -43,10 +44,16 @@ export default function DashboardPage() {
   // Live subscription to this client's events
   React.useEffect(() => {
     if (!user) return;
+    setEventsLoaded(false);
+    setDashboardError("");
     const unsub = subscribeToClientEvents(user.uid, (evts) => {
       setEvents(evts);
       setEventsLoaded(true);
       setSelectedId((cur) => cur ?? evts[0]?.orderId ?? null);
+    }, (error) => {
+      const code = (error as { code?: string }).code ?? "unknown";
+      setDashboardError(`Could not load your events (${code}).`);
+      setEventsLoaded(true);
     });
     return () => unsub();
   }, [user]);
@@ -54,7 +61,11 @@ export default function DashboardPage() {
   // Live subscription to the selected event's guests
   React.useEffect(() => {
     if (!selectedId) return;
-    const unsub = subscribeToEventGuests(selectedId, (g) => setGuests(g));
+    setDashboardError("");
+    const unsub = subscribeToEventGuests(selectedId, (g) => setGuests(g), (error) => {
+      const code = (error as { code?: string }).code ?? "unknown";
+      setDashboardError(`Could not load guests (${code}).`);
+    });
     return () => unsub();
   }, [selectedId]);
 
@@ -110,6 +121,23 @@ export default function DashboardPage() {
     return (
       <Container className="py-32 text-center">
         <p className="text-sm text-[color:var(--muted-foreground)]">Loading…</p>
+      </Container>
+    );
+  }
+
+  if (dashboardError) {
+    return (
+      <Container className="py-32 text-center">
+        <Users className="mx-auto h-10 w-10 text-[color:var(--muted-foreground)]" />
+        <h1 className="mt-6 font-[family-name:var(--font-display)] text-3xl tracking-tight">
+          Dashboard unavailable
+        </h1>
+        <p className="mx-auto mt-4 max-w-md text-[color:var(--muted-foreground)]">
+          {dashboardError} Check Firebase rules and try again.
+        </p>
+        <Button type="button" onClick={() => window.location.reload()} className="mt-8">
+          Reload dashboard
+        </Button>
       </Container>
     );
   }

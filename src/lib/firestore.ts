@@ -93,21 +93,25 @@ export async function getEventFromFirestore(orderId: string): Promise<FirestoreE
 
 export function subscribeToClientEvents(
   clientId: string,
-  cb: (events: FirestoreEvent[]) => void
+  cb: (events: FirestoreEvent[]) => void,
+  onError?: (error: Error) => void
 ): Unsubscribe {
   const q = query(collection(db, "events"), where("clientId", "==", clientId));
   return onSnapshot(q, (snap) => {
     const events = snap.docs.map((d) => d.data() as FirestoreEvent);
     events.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
     cb(events);
-  });
+  }, onError);
 }
 
-export function subscribeToAllEvents(cb: (events: FirestoreEvent[]) => void): Unsubscribe {
+export function subscribeToAllEvents(
+  cb: (events: FirestoreEvent[]) => void,
+  onError?: (error: Error) => void
+): Unsubscribe {
   const q = query(collection(db, "events"), orderBy("createdAt", "desc"));
   return onSnapshot(q, (snap) => {
     cb(snap.docs.map((d) => d.data() as FirestoreEvent));
-  });
+  }, onError);
 }
 
 export async function updateEventStatus(
@@ -169,20 +173,24 @@ export async function getGuestFromFirestore(orderId: string, guestId: string): P
 
 export function subscribeToEventGuests(
   orderId: string,
-  cb: (guests: FirestoreGuest[]) => void
+  cb: (guests: FirestoreGuest[]) => void,
+  onError?: (error: Error) => void
 ): Unsubscribe {
   const q = query(collection(db, "events", orderId, "guests"));
   return onSnapshot(q, (snap) => {
     cb(snap.docs.map((d) => d.data() as FirestoreGuest));
-  });
+  }, onError);
 }
 
 // Admin: all guests across every event via collection group
-export function subscribeToAllGuests(cb: (guests: FirestoreGuest[]) => void): Unsubscribe {
+export function subscribeToAllGuests(
+  cb: (guests: FirestoreGuest[]) => void,
+  onError?: (error: Error) => void
+): Unsubscribe {
   const q = query(collectionGroup(db, "guests"));
   return onSnapshot(q, (snap) => {
     cb(snap.docs.map((d) => d.data() as FirestoreGuest));
-  });
+  }, onError);
 }
 
 /* ----------------------------- Stats ----------------------------- */

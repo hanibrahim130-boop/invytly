@@ -39,7 +39,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    if (!auth) return;
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
+
     const unsub = onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
       if (!fbUser) {
         setUser(null);
@@ -48,22 +52,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const role: UserRole = fbUser.email === ADMIN_EMAIL ? "admin" : "client";
-
-      // Try to fetch client profile from Firestore
       let displayName = fbUser.displayName;
-      if (!displayName) {
-        const snap = await getDoc(doc(db, "clients", fbUser.uid));
-        if (snap.exists()) {
-          displayName = snap.data().name ?? null;
-        }
-      }
 
-      setUser({
-        uid: fbUser.uid,
-        email: fbUser.email,
-        displayName,
-        role,
-      });
+      try {
+        if (!displayName) {
+          const snap = await getDoc(doc(db, "clients", fbUser.uid));
+          if (snap.exists()) {
+            displayName = snap.data().name ?? null;
+          }
+        }
+      } catch {
+        displayName = displayName ?? fbUser.email ?? null;
+      } finally {
+        setUser({
+          uid: fbUser.uid,
+          email: fbUser.email,
+          displayName,
+          role,
+        });
+        setLoading(false);
+      }
+    }, () => {
+      setUser(null);
       setLoading(false);
     });
 
